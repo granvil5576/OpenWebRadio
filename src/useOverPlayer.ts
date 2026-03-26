@@ -115,9 +115,12 @@ export function useOverPlayer({
 
     const saveId = setInterval(() => {
       try {
+        const idx = trackIdxRef.current;
+        const track = orderedTracksRef.current[idx];
+        const isLiveTrack = track?.live === true || !isFinite(audio.duration);
         sessionStorage.setItem(storageKey, JSON.stringify({
-          src: orderedTracksRef.current[restoredIndex]?.src || "",
-          time: audio.currentTime || 0,
+          src: track?.src || "",
+          time: isLiveTrack ? 0 : (audio.currentTime || 0),
           wasPlaying: !audio.paused,
         }));
       } catch {}

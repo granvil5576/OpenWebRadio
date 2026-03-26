@@ -33,6 +33,7 @@ interface ThemePalette {
   divider: string;
   vizOff: string;
   mutedColor: string;
+  liveColor: string;
   progressBg: string;
   playlistBg: string;
   playlistHover: string;
@@ -50,6 +51,7 @@ const themes: Record<"dark" | "light", ThemePalette> = {
     divider: "rgba(255, 255, 255, 0.08)",
     vizOff: "rgba(255, 255, 255, 0.08)",
     mutedColor: "#ef4444",
+    liveColor: "#ef4444",
     progressBg: "rgba(255, 255, 255, 0.08)",
     playlistBg: "rgba(10, 10, 14, 0.97)",
     playlistHover: "rgba(255, 255, 255, 0.05)",
@@ -65,6 +67,7 @@ const themes: Record<"dark" | "light", ThemePalette> = {
     divider: "rgba(0, 0, 0, 0.1)",
     vizOff: "rgba(0, 0, 0, 0.08)",
     mutedColor: "#dc2626",
+    liveColor: "#dc2626",
     progressBg: "rgba(0, 0, 0, 0.08)",
     playlistBg: "rgba(252, 252, 253, 0.98)",
     playlistHover: "rgba(0, 0, 0, 0.04)",
@@ -194,11 +197,13 @@ function getOrCreateInstance(
 
   instance.saveInterval = setInterval(() => {
     try {
+      const track = instance.tracks[instance.trackIndex];
+      const isLiveTrack = track?.live === true || !isFinite(instance.audio.duration);
       sessionStorage.setItem(
         key,
         JSON.stringify({
-          src: instance.tracks[instance.trackIndex]?.src || "",
-          time: instance.audio.currentTime || 0,
+          src: track?.src || "",
+          time: isLiveTrack ? 0 : (instance.audio.currentTime || 0),
           wasPlaying: instance.playing,
         })
       );
@@ -350,8 +355,15 @@ function injectStyles() {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
     }
+    .overplayer-sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
     @media (prefers-reduced-motion: reduce) {
-      .overplayer-viz-bar { animation: none !important; }
+      .overplayer-viz-bar,
+      [style*="overplayer-live-pulse"],
+      [style*="overplayer-playlist-in"] { animation: none !important; }
     }
   `;
   document.head.appendChild(style);
@@ -650,6 +662,15 @@ export function OverPlayer({
     [duration, instance]
   );
 
+  const handleSliderKey = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!duration) return;
+      if (e.key === "ArrowRight") { e.preventDefault(); instance.audio.currentTime = Math.min(instance.audio.currentTime + 5, duration); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); instance.audio.currentTime = Math.max(instance.audio.currentTime - 5, 0); }
+    },
+    [duration, instance]
+  );
+
   const currentTrack = instance.tracks[trackIndex];
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -682,19 +703,19 @@ export function OverPlayer({
             />
           )}
           {isLive && (
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", flexShrink: 0, marginLeft: 4, animation: playing ? "overplayer-live-pulse 2s ease-in-out infinite" : "none" }} />
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: palette.liveColor, flexShrink: 0, marginLeft: 4, animation: playing ? "overplayer-live-pulse 2s ease-in-out infinite" : "none" }} />
           )}
-          <button onClick={prevTrack} style={{ ...baseStyles.btn, padding: 6, color: palette.fgDim }} aria-label="Previous track">
+          <button onClick={prevTrack} style={{ ...baseStyles.btn, padding: 10, color: palette.fgDim }} aria-label="Previous track">
             <PrevIcon size={12} />
           </button>
-          <button onClick={toggle} style={{ ...baseStyles.btn, padding: 6, color: accentColor }} aria-label={playing ? "Pause" : "Play"}>
+          <button onClick={toggle} style={{ ...baseStyles.btn, padding: 10, color: accentColor }} aria-label={playing ? "Pause" : "Play"}>
             {playing ? <PauseIcon size={16} color={accentColor} /> : <PlayIcon size={16} color={accentColor} />}
           </button>
-          <button onClick={nextTrack} style={{ ...baseStyles.btn, padding: 6, color: palette.fgDim }} aria-label="Next track">
+          <button onClick={nextTrack} style={{ ...baseStyles.btn, padding: 10, color: palette.fgDim }} aria-label="Next track">
             <NextIcon size={12} />
           </button>
           <div style={{ width: 1, height: 16, background: palette.divider, margin: "0 2px" }} />
-          <button onClick={() => setMinimized(false)} style={{ ...baseStyles.btn, padding: 6, color: palette.fgDim }} aria-label="Expand player">
+          <button onClick={() => setMinimized(false)} style={{ ...baseStyles.btn, padding: 10, color: palette.fgDim }} aria-label="Expand player">
             <ExpandIcon />
           </button>
         </div>
@@ -791,7 +812,7 @@ export function OverPlayer({
                 <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {track.title}
                   {track.live && (
-                    <span style={{ fontSize: 8, background: "#ef4444", color: "#fff", padding: "1px 4px", borderRadius: 2, marginLeft: 6, fontWeight: 700, verticalAlign: "middle", letterSpacing: "0.05em" }}>LIVE</span>
+                    <span style={{ fontSize: 8, background: palette.liveColor, color: "#fff", padding: "1px 4px", borderRadius: 2, marginLeft: 6, fontWeight: 700, verticalAlign: "middle", letterSpacing: "0.05em" }}>LIVE</span>
                   )}
                   {track.artist && (
                     <span style={{ color: palette.fgDim, marginLeft: 8, fontSize: 12 }}>{track.artist}</span>
@@ -808,6 +829,7 @@ export function OverPlayer({
         <div
           ref={progressRef}
           onClick={handleSeek}
+          onKeyDown={handleSliderKey}
           style={{
             height: 3,
             background: palette.progressBg,
@@ -948,7 +970,7 @@ export function OverPlayer({
           {isLive ? (
             <span style={{
               fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "#fff",
-              background: "#ef4444", padding: "2px 6px", borderRadius: 3, flexShrink: 0,
+              background: palette.liveColor, padding: "2px 6px", borderRadius: 3, flexShrink: 0,
               textTransform: "uppercase" as const,
               animation: playing ? "overplayer-live-pulse 2s ease-in-out infinite" : "none",
             }}>
@@ -1031,6 +1053,11 @@ export function OverPlayer({
       </div>
 
       {footer}
+
+      {/* Screen reader track announcements */}
+      <div className="overplayer-sr-only" aria-live="polite" aria-atomic="true">
+        {hasInteracted && currentTrack ? `Now playing: ${currentTrack.title}${currentTrack.artist ? ` by ${currentTrack.artist}` : ""}${isLive ? " (live)" : ""}` : ""}
+      </div>
     </div>
   );
 }
