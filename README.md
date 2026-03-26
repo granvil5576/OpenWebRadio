@@ -1,13 +1,14 @@
 # OverPlayer
 
-A sleek, persistent audio player component for React. Fixed bottom bar with shuffle, repeat, volume control, minimizable UI, session persistence, and automatic autoplay unlock.
+A sleek, persistent audio player component for React. Fixed bottom bar with shuffle, repeat, volume control, minimizable UI, session persistence, and automatic autoplay unlock. Ships with **dark** and **light** themes.
 
-Born from the [Warsaw Glitch Festival](https://glitch.festival) project by [GameOwerMedia](https://github.com/GameOwerMedia).
+Created by **[OverJK](https://github.com/GameOwerMedia)** — extracted from the [Warsaw Glitch Festival](https://glitch.festival) project.
 
 ---
 
 ## Features
 
+- **Dark & Light themes** — built-in `"dark"` and `"light"` modes, switch with a single prop
 - **Persistent playback** — audio survives page navigation and React remounts
 - **Session restore** — remembers track, position, and playing state across page reloads
 - **Shuffle & Repeat** — shuffle mode and repeat-one toggle
@@ -72,11 +73,36 @@ The player renders as a fixed bottom bar — just drop it anywhere in your compo
 
 ---
 
+## Themes
+
+OverPlayer ships with two built-in themes. Pass the `theme` prop to switch:
+
+### Dark (default)
+
+```tsx
+<OverPlayer tracks={tracks} theme="dark" />
+```
+
+Dark translucent background, light text. Ideal for dark UIs, media apps, and creative projects.
+
+### Light
+
+```tsx
+<OverPlayer tracks={tracks} theme="light" />
+```
+
+Light frosted background, dark text. Ideal for light UIs, documentation sites, and corporate apps.
+
+Both themes support full accent color customization — the `accentColor` and `accentColorAlt` props work independently of the theme.
+
+---
+
 ## Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `tracks` | `Track[]` | **required** | Array of tracks to play |
+| `theme` | `"dark" \| "light"` | `"dark"` | Color theme |
 | `shuffle` | `boolean` | `true` | Enable shuffle by default |
 | `autoplay` | `boolean` | `true` | Attempt autoplay on load |
 | `volume` | `number` | `0.3` | Initial volume (0–1) |
@@ -102,14 +128,26 @@ interface Track {
 
 ## Examples
 
-### Custom Colors
+### Dark Theme with Custom Colors
 
 ```tsx
 <OverPlayer
   tracks={tracks}
+  theme="dark"
   accentColor="#ffd700"
   accentColorAlt="#ff6b35"
   brandLabel="MyRadio"
+/>
+```
+
+### Light Theme
+
+```tsx
+<OverPlayer
+  tracks={tracks}
+  theme="light"
+  accentColor="#6366f1"
+  accentColorAlt="#ec4899"
 />
 ```
 
@@ -187,4 +225,4 @@ npm run typecheck
 
 ## License
 
-[MIT](./LICENSE) — GameOwerMedia
+[MIT](./LICENSE) — Created by [OverJK](https://github.com/GameOwerMedia)

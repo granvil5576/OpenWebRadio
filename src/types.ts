@@ -10,6 +10,8 @@ export interface Track {
 export interface OverPlayerProps {
   /** List of tracks to play */
   tracks: Track[];
+  /** Color theme — "dark" or "light" (default: "dark") */
+  theme?: "dark" | "light";
   /** Whether shuffle is enabled by default (default: true) */
   shuffle?: boolean;
   /** Whether to autoplay on load (default: true, subject to browser restrictions) */

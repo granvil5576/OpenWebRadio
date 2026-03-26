@@ -14,6 +14,42 @@ function shuffleArray<T>(arr: T[]): T[] {
   return a;
 }
 
+/* ═══ Theme palettes ═══ */
+
+interface ThemePalette {
+  bg: string;
+  fg: string;
+  fgDim: string;
+  fgMid: string;
+  border: string;
+  divider: string;
+  vizOff: string;
+  mutedColor: string;
+}
+
+const themes: Record<"dark" | "light", ThemePalette> = {
+  dark: {
+    bg: "rgba(10, 10, 14, 0.92)",
+    fg: "rgba(255, 255, 255, 0.7)",
+    fgDim: "rgba(255, 255, 255, 0.3)",
+    fgMid: "rgba(255, 255, 255, 0.5)",
+    border: "rgba(255, 255, 255, 0.08)",
+    divider: "rgba(255, 255, 255, 0.08)",
+    vizOff: "rgba(255, 255, 255, 0.08)",
+    mutedColor: "#ef4444",
+  },
+  light: {
+    bg: "rgba(252, 252, 253, 0.94)",
+    fg: "rgba(0, 0, 0, 0.75)",
+    fgDim: "rgba(0, 0, 0, 0.3)",
+    fgMid: "rgba(0, 0, 0, 0.5)",
+    border: "rgba(0, 0, 0, 0.08)",
+    divider: "rgba(0, 0, 0, 0.1)",
+    vizOff: "rgba(0, 0, 0, 0.08)",
+    mutedColor: "#dc2626",
+  },
+};
+
 /* ═══ Global audio state — survives React remounts ═══ */
 
 const instances = new Map<
@@ -299,10 +335,6 @@ const baseStyles = {
   accentLine: {
     height: 1,
   },
-  bar: {
-    backdropFilter: "blur(24px)",
-    borderTop: "1px solid rgba(255,255,255,0.08)",
-  },
   inner: {
     margin: "0 auto",
     maxWidth: 1400,
@@ -322,12 +354,6 @@ const baseStyles = {
     transition: "opacity 0.15s",
     flexShrink: 0,
   },
-  divider: {
-    width: 1,
-    height: 20,
-    background: "rgba(255,255,255,0.08)",
-    flexShrink: 0,
-  },
   trackInfo: {
     flex: 1,
     minWidth: 0,
@@ -336,25 +362,6 @@ const baseStyles = {
     whiteSpace: "nowrap" as const,
     fontSize: 13,
     letterSpacing: "0.06em",
-  },
-  volumeSlider: {
-    width: 56,
-    height: 4,
-    cursor: "pointer",
-    accentColor: "var(--overplayer-accent, #00e5ff)",
-  },
-  miniContainer: {
-    position: "fixed" as const,
-    bottom: 16,
-    right: 16,
-    zIndex: 50,
-    display: "flex",
-    alignItems: "center",
-    gap: 2,
-    backdropFilter: "blur(16px)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 9999,
-    padding: "2px 4px",
   },
 };
 
@@ -385,6 +392,7 @@ function injectStyles() {
 
 export function OverPlayer({
   tracks,
+  theme = "dark",
   shuffle: initialShuffle = true,
   autoplay = true,
   volume: initialVolume = 0.3,
@@ -403,6 +411,8 @@ export function OverPlayer({
     initialShuffle,
     autoplay
   );
+
+  const palette = themes[theme];
 
   const [playing, setPlaying] = useState(instance.playing);
   const [hasInteracted, setHasInteracted] = useState(instance.hasInteracted);
@@ -529,10 +539,6 @@ export function OverPlayer({
   }, [muted, volume, instance]);
 
   const currentTrack = instance.tracks[trackIndex];
-  const bg = "rgba(10, 10, 14, 0.92)";
-  const fg = "rgba(255, 255, 255, 0.7)";
-  const fgDim = "rgba(255, 255, 255, 0.3)";
-  const fgMid = "rgba(255, 255, 255, 0.5)";
 
   if (minimized) {
     return (
@@ -540,13 +546,23 @@ export function OverPlayer({
         {footer}
         <div
           style={{
-            ...baseStyles.miniContainer,
-            background: `${bg}`,
+            position: "fixed" as const,
+            bottom: 16,
+            right: 16,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${palette.border}`,
+            borderRadius: 9999,
+            padding: "2px 4px",
+            background: palette.bg,
           }}
         >
           <button
             onClick={prevTrack}
-            style={{ ...baseStyles.btn, padding: 6, color: fgDim }}
+            style={{ ...baseStyles.btn, padding: 6, color: palette.fgDim }}
             aria-label="Previous track"
           >
             <PrevIcon size={12} />
@@ -564,7 +580,7 @@ export function OverPlayer({
           </button>
           <button
             onClick={nextTrack}
-            style={{ ...baseStyles.btn, padding: 6, color: fgDim }}
+            style={{ ...baseStyles.btn, padding: 6, color: palette.fgDim }}
             aria-label="Next track"
           >
             <NextIcon size={12} />
@@ -573,13 +589,13 @@ export function OverPlayer({
             style={{
               width: 1,
               height: 16,
-              background: "rgba(255,255,255,0.08)",
+              background: palette.divider,
               margin: "0 2px",
             }}
           />
           <button
             onClick={() => setMinimized(false)}
-            style={{ ...baseStyles.btn, padding: 6, color: fgDim }}
+            style={{ ...baseStyles.btn, padding: 6, color: palette.fgDim }}
             aria-label="Expand player"
           >
             <ExpandIcon />
@@ -599,12 +615,18 @@ export function OverPlayer({
         }}
       />
 
-      <div style={{ ...baseStyles.bar, background: bg }}>
+      <div
+        style={{
+          backdropFilter: "blur(24px)",
+          borderTop: `1px solid ${palette.border}`,
+          background: palette.bg,
+        }}
+      >
         <div style={baseStyles.inner}>
           {/* Prev */}
           <button
             onClick={prevTrack}
-            style={{ ...baseStyles.btn, color: fgMid }}
+            style={{ ...baseStyles.btn, color: palette.fgMid }}
             aria-label="Previous track"
           >
             <PrevIcon />
@@ -626,7 +648,7 @@ export function OverPlayer({
           {/* Next */}
           <button
             onClick={nextTrack}
-            style={{ ...baseStyles.btn, color: fgMid }}
+            style={{ ...baseStyles.btn, color: palette.fgMid }}
             aria-label="Next track"
           >
             <NextIcon />
@@ -637,7 +659,7 @@ export function OverPlayer({
             onClick={() => setShuffleOn(!shuffleOn)}
             style={{
               ...baseStyles.btn,
-              color: shuffleOn ? accentColor : fgDim,
+              color: shuffleOn ? accentColor : palette.fgDim,
             }}
             aria-label={shuffleOn ? "Shuffle on" : "Shuffle off"}
             title={shuffleOn ? "Shuffle: ON" : "Shuffle: OFF"}
@@ -650,7 +672,7 @@ export function OverPlayer({
             onClick={() => setRepeatOne(!repeatOne)}
             style={{
               ...baseStyles.btn,
-              color: repeatOne ? accentColorAlt : fgDim,
+              color: repeatOne ? accentColorAlt : palette.fgDim,
               position: "relative",
             }}
             aria-label={repeatOne ? "Repeat one on" : "Repeat off"}
@@ -674,7 +696,14 @@ export function OverPlayer({
           </button>
 
           {/* Divider */}
-          <div style={baseStyles.divider} />
+          <div
+            style={{
+              width: 1,
+              height: 20,
+              background: palette.divider,
+              flexShrink: 0,
+            }}
+          />
 
           {/* Mini visualizer bars */}
           <div
@@ -710,17 +739,17 @@ export function OverPlayer({
                       width: 2,
                       height: 4,
                       borderRadius: "1px 1px 0 0",
-                      background: "rgba(255,255,255,0.08)",
+                      background: palette.vizOff,
                     }}
                   />
                 ))}
           </div>
 
           {/* Track info */}
-          <div style={{ ...baseStyles.trackInfo, color: fg }}>
+          <div style={{ ...baseStyles.trackInfo, color: palette.fg }}>
             {hasInteracted ? currentTrack?.title : tracks[0]?.title || ""}
             {(subtitle || currentTrack?.artist) && (
-              <span style={{ color: fgDim, marginLeft: 8 }}>
+              <span style={{ color: palette.fgDim, marginLeft: 8 }}>
                 {subtitle || currentTrack?.artist}
               </span>
             )}
@@ -728,14 +757,19 @@ export function OverPlayer({
 
           {/* Volume */}
           <div
-            style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              flexShrink: 0,
+            }}
           >
             <button
               onClick={toggleMute}
               style={{
                 ...baseStyles.btn,
                 padding: 6,
-                color: muted ? "#ef4444" : fgDim,
+                color: muted ? palette.mutedColor : palette.fgDim,
               }}
               aria-label={muted ? "Unmute" : "Mute"}
             >
@@ -748,19 +782,31 @@ export function OverPlayer({
               step="0.05"
               value={volume}
               onChange={(e) => changeVolume(parseFloat(e.target.value))}
-              style={baseStyles.volumeSlider}
+              style={{
+                width: 56,
+                height: 4,
+                cursor: "pointer",
+                accentColor: accentColor,
+              }}
               aria-label="Volume"
               title={`Volume: ${Math.round(volume * 100)}%`}
             />
           </div>
 
           {/* Divider */}
-          <div style={baseStyles.divider} />
+          <div
+            style={{
+              width: 1,
+              height: 20,
+              background: palette.divider,
+              flexShrink: 0,
+            }}
+          />
 
           {/* Minimize */}
           <button
             onClick={() => setMinimized(true)}
-            style={{ ...baseStyles.btn, color: fgDim }}
+            style={{ ...baseStyles.btn, color: palette.fgDim }}
             aria-label="Minimize player"
           >
             <MinimizeIcon />
@@ -772,7 +818,7 @@ export function OverPlayer({
               style={{
                 fontSize: 11,
                 letterSpacing: "0.08em",
-                color: fgDim,
+                color: palette.fgDim,
                 marginLeft: 4,
                 flexShrink: 0,
               }}
