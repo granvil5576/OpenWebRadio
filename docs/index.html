@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OverPlayer — Live Demo</title>
+  <title>OpenWebRadio — Live Demo</title>
   <meta name="description" content="A sleek, persistent audio player component for React. Dark & light themes, shuffle, repeat, playlist, keyboard shortcuts." />
-  <meta property="og:title" content="OverPlayer — Persistent React Audio Player" />
+  <meta property="og:title" content="OpenWebRadio — Persistent React Audio Player" />
   <meta property="og:description" content="Sleek audio player with dark/light themes, shuffle, repeat, playlist drawer, session persistence, and keyboard shortcuts." />
   <meta property="og:type" content="website" />
 
@@ -564,7 +564,8 @@ function App() {
   const [theme, setTheme] = useState("dark");
   const [accent, setAccent] = useState("#00e5ff");
   const [accentAlt, setAccentAlt] = useState("#ff2d7b");
-  const [label, setLabel] = useState("OverPlayer");
+  const [label, setLabel] = useState("OpenWebRadio");
+  const [subtitle, setSubtitle] = useState("");
 
   useEffect(() => {
     document.body.className = theme === "light" ? "light-mode" : "";
@@ -577,7 +578,7 @@ function App() {
         <div className="hero">
           <div className="hero-badge">Open Source Audio Player</div>
           <h1>
-            <span>Over</span>Player
+            <span>OpenWeb</span>Radio
           </h1>
           <p>
             A persistent React audio player with dark &amp; light themes,
@@ -624,16 +625,16 @@ function App() {
             </div>
             <div className="control-card">
               <label>Brand Label</label>
-              <select value={label} onChange={e => setLabel(e.target.value)}>
-                <option value="OverPlayer">OverPlayer</option>
-                <option value="OpenWebRadio">OpenWebRadio</option>
-                <option value="GlitchPlayer">GlitchPlayer</option>
-                <option value="GlitchFM">GlitchFM</option>
-                <option value="WebFM">WebFM</option>
-                <option value="MyRadio">MyRadio</option>
-                <option value="StreamFM">StreamFM</option>
-                <option value="">None</option>
-              </select>
+              <input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="Your brand name" style={{width:"100%",padding:"6px 10px",borderRadius:8,border:"1px solid var(--card-border)",background:"var(--card-bg)",color:"var(--fg)",fontSize:14}} />
+              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+                {["OpenWebRadio","OverPlayer","GlitchPlayer","GlitchFM","WebFM","MyRadio","StreamFM"].map(p=>(
+                  <button key={p} onClick={()=>setLabel(p)} style={{padding:"2px 8px",borderRadius:6,border: label===p ? "1px solid var(--accent)" : "1px solid var(--card-border)",background: label===p ? "rgba(0,229,255,0.1)" : "var(--card-bg)",color: label===p ? "var(--accent)" : "var(--fg-dim)",fontSize:11,cursor:"pointer"}}>{p}</button>
+                ))}
+              </div>
+            </div>
+            <div className="control-card">
+              <label>Subtitle Text</label>
+              <input type="text" value={subtitle} onChange={e => setSubtitle(e.target.value)} placeholder="e.g. Live from NYC" style={{width:"100%",padding:"6px 10px",borderRadius:8,border:"1px solid var(--card-border)",background:"var(--card-bg)",color:"var(--fg)",fontSize:14}} />
             </div>
           </div>
         </div>
@@ -698,6 +699,7 @@ const tracks = [
         accentColor={accent}
         accentColorAlt={accentAlt}
         brandLabel={label}
+        subtitle={subtitle}
         autoplay={false}
       />
     </>
