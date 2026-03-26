@@ -625,12 +625,18 @@ function App() {
             </div>
             <div className="control-card">
               <label>Brand Label</label>
-              <input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="Your brand name" style={{width:"100%",padding:"6px 10px",borderRadius:8,border:"1px solid var(--card-border)",background:"var(--card-bg)",color:"var(--fg)",fontSize:14}} />
-              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
-                {["OpenWebRadio","OpenWebPlayer","OpenPlayer","OverPlayer","GlitchPlayer","GlitchFM","WebFM","MyRadio","StreamFM"].map(p=>(
-                  <button key={p} onClick={()=>setLabel(p)} style={{padding:"2px 8px",borderRadius:6,border: label===p ? "1px solid var(--accent)" : "1px solid var(--card-border)",background: label===p ? "rgba(0,229,255,0.1)" : "var(--card-bg)",color: label===p ? "var(--accent)" : "var(--fg-dim)",fontSize:11,cursor:"pointer"}}>{p}</button>
-                ))}
-              </div>
+              <select value={label} onChange={e => setLabel(e.target.value)}>
+                <option value="OpenWebRadio">OpenWebRadio</option>
+                <option value="OpenWebPlayer">OpenWebPlayer</option>
+                <option value="OpenPlayer">OpenPlayer</option>
+                <option value="OverPlayer">OverPlayer</option>
+                <option value="GlitchPlayer">GlitchPlayer</option>
+                <option value="GlitchFM">GlitchFM</option>
+                <option value="WebFM">WebFM</option>
+                <option value="MyRadio">MyRadio</option>
+                <option value="StreamFM">StreamFM</option>
+                <option value="">None</option>
+              </select>
             </div>
             <div className="control-card">
               <label>Subtitle Text</label>
