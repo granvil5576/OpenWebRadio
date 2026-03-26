@@ -10,6 +10,7 @@ Created by **[OverJK](https://github.com/GameOwerMedia)**
 
 ## Features
 
+- **Live stream support** — plays internet radio streams (Icecast/Shoutcast), auto-detects live sources, shows LIVE badge, hides seek bar
 - **Dark, Light & Auto themes** — `"dark"`, `"light"`, or `"auto"` (follows OS preference)
 - **Progress bar with seek** — clickable timeline with elapsed/remaining time display
 - **Playlist drawer** — slide-up track list, click to jump, animated playing indicator
@@ -152,6 +153,7 @@ interface Track {
   title: string;    // Display title
   artist?: string;  // Optional artist name
   cover?: string;   // Optional cover art URL
+  live?: boolean;   // Hint that this is a live stream (auto-detected if omitted)
 }
 ```
 
@@ -225,6 +227,20 @@ function CustomPlayer() {
 ---
 
 ## Examples
+
+### Live Radio Streams
+
+```tsx
+const tracks = [
+  { src: "/audio/intro.mp3", title: "Welcome", artist: "Host" },
+  { src: "https://ice1.somafm.com/groovesalad-128-mp3", title: "Groove Salad", artist: "SomaFM", live: true },
+  { src: "https://ice1.somafm.com/defcon-128-mp3", title: "DEF CON Radio", artist: "SomaFM", live: true },
+];
+
+<OverPlayer tracks={tracks} brandLabel="OpenWebRadio" />
+```
+
+Live streams automatically hide the seek bar and show a pulsing LIVE badge. Set `live: true` explicitly, or let the player auto-detect from the stream's infinite duration.
 
 ### With Cover Art
 

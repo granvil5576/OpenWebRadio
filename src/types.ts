@@ -7,6 +7,8 @@ export interface Track {
   artist?: string;
   /** Optional cover art URL */
   cover?: string;
+  /** Hint that this track is a live stream (auto-detected from duration if omitted) */
+  live?: boolean;
 }
 
 export interface OverPlayerProps {
@@ -56,6 +58,8 @@ export interface OverPlayerState {
   muted: boolean;
   shuffleOn: boolean;
   repeatOne: boolean;
+  /** True when the current track is a live stream */
+  isLive: boolean;
 }
 
 export interface OverPlayerControls {

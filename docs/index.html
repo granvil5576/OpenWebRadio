@@ -375,7 +375,7 @@ let injected = false;
 function injectCSS() {
   if (injected) return; injected = true;
   const s = document.createElement("style");
-  s.textContent = `@keyframes overplayer-bar{0%{transform:scaleY(.2)}100%{transform:scaleY(1)}} @keyframes overplayer-playlist-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} @media(prefers-reduced-motion:reduce){.overplayer-viz-bar{animation:none!important}}`;
+  s.textContent = `@keyframes overplayer-bar{0%{transform:scaleY(.2)}100%{transform:scaleY(1)}} @keyframes overplayer-playlist-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} @keyframes overplayer-live-pulse{0%,100%{opacity:1}50%{opacity:.5}} @media(prefers-reduced-motion:reduce){.overplayer-viz-bar{animation:none!important}}`;
   document.head.appendChild(s);
 }
 
@@ -412,6 +412,7 @@ function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autopla
   const [curTime, setCurTime] = useState(0);
   const [dur, setDur] = useState(0);
   const [showPL, setShowPL] = useState(false);
+  const [isLive, setIsLive] = useState(false);
   const prevVolRef = useRef(initVol);
   const progRef = useRef(null);
 
@@ -423,8 +424,14 @@ function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autopla
   }, []);
   useEffect(() => {
     const a = inst.audio;
-    const onTU = () => { setCurTime(a.currentTime); setDur(a.duration || 0); };
-    const onLM = () => setDur(a.duration || 0);
+    const checkLive = () => {
+      const t = inst.tracks[inst.trackIndex];
+      if (t?.live === true) { setIsLive(true); return; }
+      if (t?.live === false) { setIsLive(false); return; }
+      setIsLive(!isFinite(a.duration));
+    };
+    const onTU = () => { setCurTime(a.currentTime); setDur(a.duration || 0); checkLive(); };
+    const onLM = () => { setDur(a.duration || 0); checkLive(); };
     a.addEventListener("timeupdate", onTU); a.addEventListener("loadedmetadata", onLM);
     return () => { a.removeEventListener("timeupdate", onTU); a.removeEventListener("loadedmetadata", onLM); };
   }, [inst.audio]);
@@ -446,8 +453,8 @@ function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autopla
       const tag = e.target?.tagName; if (tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT") return;
       switch(e.code) {
         case "Space": e.preventDefault(); toggle(); break;
-        case "ArrowRight": e.preventDefault(); inst.audio.currentTime = Math.min(inst.audio.currentTime+5, inst.audio.duration||0); break;
-        case "ArrowLeft": e.preventDefault(); inst.audio.currentTime = Math.max(inst.audio.currentTime-5, 0); break;
+        case "ArrowRight": if(isLive) break; e.preventDefault(); inst.audio.currentTime = Math.min(inst.audio.currentTime+5, inst.audio.duration||0); break;
+        case "ArrowLeft": if(isLive) break; e.preventDefault(); inst.audio.currentTime = Math.max(inst.audio.currentTime-5, 0); break;
         case "ArrowUp": e.preventDefault(); changeVol(Math.min((inst.audio.volume||0)+0.05, 1)); break;
         case "ArrowDown": e.preventDefault(); changeVol(Math.max((inst.audio.volume||0)-0.05, 0)); break;
         case "KeyN": nextTrack(); break;
@@ -457,7 +464,7 @@ function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autopla
       }
     };
     document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
-  }, [keyboardShortcuts, playing, trackIndex, muted, vol]);
+  }, [keyboardShortcuts, playing, trackIndex, muted, vol, isLive]);
 
   const toggle = useCallback(() => {
     if (playing) { inst.audio.pause(); inst.playing=false; setPlaying(false); cbRef.current.onPause?.(); }
@@ -478,6 +485,7 @@ function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autopla
       {footer}
       <div style={{position:"fixed",bottom:16,right:16,zIndex:50,display:"flex",alignItems:"center",gap:2,backdropFilter:"blur(16px)",border:`1px solid ${p.border}`,borderRadius:9999,padding:"2px 4px",background:p.bg}}>
         {ct?.cover && <img src={ct.cover} alt="" style={{width:20,height:20,borderRadius:9999,objectFit:"cover",marginLeft:4}}/>}
+        {isLive && <span style={{width:6,height:6,borderRadius:"50%",background:"#ef4444",flexShrink:0,marginLeft:4,animation:playing?"overplayer-live-pulse 2s ease-in-out infinite":"none"}}/>}
         <button onClick={prevTrack} style={{...btnBase,padding:6,color:p.fgDim}}><PrevIcon size={12}/></button>
         <button onClick={toggle} style={{...btnBase,padding:6,color:accentColor}}>{playing?<PauseIcon size={16} color={accentColor}/>:<PlayIcon size={16} color={accentColor}/>}</button>
         <button onClick={nextTrack} style={{...btnBase,padding:6,color:p.fgDim}}><NextIcon size={12}/></button>
@@ -504,17 +512,17 @@ function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autopla
                   {i===trackIndex&&playing?<span style={{display:"inline-flex",alignItems:"flex-end",gap:1,height:12}}>{[0,1,2].map(b=><span key={b} className="overplayer-viz-bar" style={{display:"inline-block",width:2,background:accentColor,borderRadius:"1px 1px 0 0",height:"100%",animation:`overplayer-bar ${0.3+b*0.15}s ease-in-out infinite alternate`}}/>)}</span>:i+1}
                 </span>
                 {t.cover && <img src={t.cover} alt="" style={{width:28,height:28,borderRadius:4,objectFit:"cover",flexShrink:0}}/>}
-                <span style={{flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.title}{t.artist&&<span style={{color:p.fgDim,marginLeft:8,fontSize:12}}>{t.artist}</span>}</span>
+                <span style={{flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.title}{t.live&&<span style={{fontSize:8,background:"#ef4444",color:"#fff",padding:"1px 4px",borderRadius:2,marginLeft:6,fontWeight:700,verticalAlign:"middle",letterSpacing:"0.05em"}}>LIVE</span>}{t.artist&&<span style={{color:p.fgDim,marginLeft:8,fontSize:12}}>{t.artist}</span>}</span>
               </button>
             ))}
           </div>
         </div>
       )}
-      <div ref={progRef} onClick={handleSeek} style={{height:3,background:p.progressBg,cursor:"pointer",position:"relative"}} role="slider" aria-label="Seek" tabIndex={0}>
+      {!isLive && <div ref={progRef} onClick={handleSeek} style={{height:3,background:p.progressBg,cursor:"pointer",position:"relative"}} role="slider" aria-label="Seek" tabIndex={0}>
         <div style={{height:"100%",width:`${prog}%`,background:`linear-gradient(to right,${accentColor},${accentColorAlt})`,borderRadius:"0 1px 1px 0",transition:"width 0.15s linear",position:"relative"}}>
           <div style={{position:"absolute",right:-4,top:-3,width:9,height:9,borderRadius:9999,background:accentColor,boxShadow:`0 0 6px ${accentColor}60`}}/>
         </div>
-      </div>
+      </div>}
       <div style={{height:1,background:`linear-gradient(to right,${accentColor}50,${accentColorAlt}50,${accentColor}50)`}}/>
       <div style={{backdropFilter:"blur(24px)",borderTop:`1px solid ${p.border}`,background:p.bg}}>
         <div style={{margin:"0 auto",maxWidth:1400,padding:"0 12px",display:"flex",alignItems:"center",height:48,gap:8}}>
@@ -528,12 +536,12 @@ function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autopla
           <div style={{display:"flex",alignItems:"flex-end",gap:2,height:16,flexShrink:0}}>
             {playing?Array.from({length:5}).map((_,i)=><div key={i} className="overplayer-viz-bar" style={{width:2,borderRadius:"1px 1px 0 0",background:i%2===0?accentColor:accentColorAlt,opacity:0.8,height:"100%",animation:`overplayer-bar ${0.3+i*0.12}s ease-in-out infinite alternate`,animationDelay:`${i*0.08}s`}}/>):Array.from({length:5}).map((_,i)=><div key={i} style={{width:2,height:4,borderRadius:"1px 1px 0 0",background:p.vizOff}}/>)}
           </div>
-          <span style={{fontSize:10,color:p.fgDim,flexShrink:0,fontVariantNumeric:"tabular-nums",minWidth:32}}>{formatTime(curTime)}</span>
+          {isLive ? <span style={{fontSize:9,fontWeight:700,letterSpacing:"0.08em",color:"#fff",background:"#ef4444",padding:"2px 6px",borderRadius:3,flexShrink:0,textTransform:"uppercase",animation:playing?"overplayer-live-pulse 2s ease-in-out infinite":"none"}}>LIVE</span> : <span style={{fontSize:10,color:p.fgDim,flexShrink:0,fontVariantNumeric:"tabular-nums",minWidth:32}}>{formatTime(curTime)}</span>}
           <div style={{flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:13,letterSpacing:"0.06em",color:p.fg}}>
             {hasInteracted?ct?.title:tracks[0]?.title||""}
             {(subtitle||ct?.artist)&&<span style={{color:p.fgDim,marginLeft:8}}>{subtitle||ct?.artist}</span>}
           </div>
-          <span style={{fontSize:10,color:p.fgDim,flexShrink:0,fontVariantNumeric:"tabular-nums",minWidth:38}}>-{formatTime(Math.max(0,dur-curTime))}</span>
+          {!isLive && <span style={{fontSize:10,color:p.fgDim,flexShrink:0,fontVariantNumeric:"tabular-nums",minWidth:38}}>-{formatTime(Math.max(0,dur-curTime))}</span>}
           <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
             <button onClick={toggleMute} style={{...btnBase,padding:6,color:muted?p.mutedColor:p.fgDim}}><VolumeIcon muted={muted} level={vol}/></button>
             <input type="range" min="0" max="1" step="0.05" value={vol} onChange={e=>changeVol(parseFloat(e.target.value))} style={{width:56,height:4,cursor:"pointer",accentColor}} aria-label="Volume"/>
@@ -558,6 +566,8 @@ const DEMO_TRACKS = [
   { src: "audio/anthropocene-rock.mp3", title: "Anthropocene Rock", artist: "OverJK" },
   { src: "audio/in-the-void.mp3", title: "In the Void of Mediocre Acting", artist: "OverJK" },
   { src: "audio/sora-2.mp3", title: "I'm Sorry Too... (Sora 2)", artist: "OverJK" },
+  { src: "https://ice1.somafm.com/groovesalad-128-mp3", title: "Groove Salad", artist: "SomaFM", live: true },
+  { src: "https://ice1.somafm.com/defcon-128-mp3", title: "DEF CON Radio", artist: "SomaFM", live: true },
 ];
 
 function App() {
@@ -589,6 +599,7 @@ function App() {
             <span className="badge"><span className="badge-dot" style={{background:"#22c55e"}}></span> Zero Dependencies</span>
             <span className="badge"><span className="badge-dot" style={{background:"#3b82f6"}}></span> TypeScript</span>
             <span className="badge"><span className="badge-dot" style={{background:"#a855f7"}}></span> React 18+</span>
+            <span className="badge"><span className="badge-dot" style={{background:"#ef4444"}}></span> Live Streams</span>
             <span className="badge"><span className="badge-dot" style={{background:"#f59e0b"}}></span> MIT License</span>
           </div>
 
@@ -652,7 +663,7 @@ function App() {
             {DEMO_TRACKS.map((t, i) => (
               <div key={i} className="track-item">
                 <span className="track-num">{i + 1}</span>
-                <span className="track-title">{t.title}</span>
+                <span className="track-title">{t.title}{t.live && <span style={{fontSize:9,background:"#ef4444",color:"#fff",padding:"1px 5px",borderRadius:3,marginLeft:8,fontWeight:700}}>LIVE</span>}</span>
                 <span className="track-artist">{t.artist}</span>
               </div>
             ))}

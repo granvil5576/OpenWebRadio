@@ -32,7 +32,11 @@
     "component",
     "persistent",
     "shuffle",
-    "typescript"
+    "typescript",
+    "live",
+    "stream",
+    "radio",
+    "hls"
   ],
   "author": "GameOwerMedia",
   "license": "MIT",

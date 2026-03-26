@@ -346,6 +346,10 @@ function injectStyles() {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes overplayer-live-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
     @media (prefers-reduced-motion: reduce) {
       .overplayer-viz-bar { animation: none !important; }
     }
@@ -422,6 +426,7 @@ export function OverPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showPlaylist, setShowPlaylist] = useState(false);
+  const [isLive, setIsLive] = useState(false);
   const prevVolumeRef = useRef(initialVolume);
   const progressRef = useRef<HTMLDivElement>(null);
 
@@ -447,11 +452,18 @@ export function OverPlayer({
   // Track time updates
   useEffect(() => {
     const audio = instance.audio;
+    const checkLive = () => {
+      const track = instance.tracks[instance.trackIndex];
+      if (track?.live === true) { setIsLive(true); return; }
+      if (track?.live === false) { setIsLive(false); return; }
+      setIsLive(!isFinite(audio.duration));
+    };
     const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
       setDuration(audio.duration || 0);
+      checkLive();
     };
-    const onLoadedMeta = () => setDuration(audio.duration || 0);
+    const onLoadedMeta = () => { setDuration(audio.duration || 0); checkLive(); };
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMeta);
     return () => {
@@ -505,6 +517,7 @@ export function OverPlayer({
           toggle();
           break;
         case "ArrowRight":
+          if (isLive) break;
           e.preventDefault();
           instance.audio.currentTime = Math.min(
             instance.audio.currentTime + 5,
@@ -512,6 +525,7 @@ export function OverPlayer({
           );
           break;
         case "ArrowLeft":
+          if (isLive) break;
           e.preventDefault();
           instance.audio.currentTime = Math.max(instance.audio.currentTime - 5, 0);
           break;
@@ -541,7 +555,7 @@ export function OverPlayer({
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keyboardShortcuts, playing, trackIndex, muted, volume]);
+  }, [keyboardShortcuts, playing, trackIndex, muted, volume, isLive]);
 
   const toggle = useCallback(() => {
     const audio = instance.audio;
@@ -667,6 +681,9 @@ export function OverPlayer({
               style={{ width: 20, height: 20, borderRadius: 9999, objectFit: "cover", marginLeft: 4 }}
             />
           )}
+          {isLive && (
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", flexShrink: 0, marginLeft: 4, animation: playing ? "overplayer-live-pulse 2s ease-in-out infinite" : "none" }} />
+          )}
           <button onClick={prevTrack} style={{ ...baseStyles.btn, padding: 6, color: palette.fgDim }} aria-label="Previous track">
             <PrevIcon size={12} />
           </button>
@@ -773,6 +790,9 @@ export function OverPlayer({
                 {/* Title + artist */}
                 <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {track.title}
+                  {track.live && (
+                    <span style={{ fontSize: 8, background: "#ef4444", color: "#fff", padding: "1px 4px", borderRadius: 2, marginLeft: 6, fontWeight: 700, verticalAlign: "middle", letterSpacing: "0.05em" }}>LIVE</span>
+                  )}
                   {track.artist && (
                     <span style={{ color: palette.fgDim, marginLeft: 8, fontSize: 12 }}>{track.artist}</span>
                   )}
@@ -783,48 +803,50 @@ export function OverPlayer({
         </div>
       )}
 
-      {/* Progress bar (seekable) */}
-      <div
-        ref={progressRef}
-        onClick={handleSeek}
-        style={{
-          height: 3,
-          background: palette.progressBg,
-          cursor: "pointer",
-          position: "relative",
-        }}
-        role="slider"
-        aria-label="Seek"
-        aria-valuenow={Math.round(currentTime)}
-        aria-valuemin={0}
-        aria-valuemax={Math.round(duration)}
-        tabIndex={0}
-      >
+      {/* Progress bar (seekable) — hidden for live streams */}
+      {!isLive && (
         <div
+          ref={progressRef}
+          onClick={handleSeek}
           style={{
-            height: "100%",
-            width: `${progress}%`,
-            background: `linear-gradient(to right, ${accentColor}, ${accentColorAlt})`,
-            borderRadius: "0 1px 1px 0",
-            transition: "width 0.15s linear",
+            height: 3,
+            background: palette.progressBg,
+            cursor: "pointer",
             position: "relative",
           }}
+          role="slider"
+          aria-label="Seek"
+          aria-valuenow={Math.round(currentTime)}
+          aria-valuemin={0}
+          aria-valuemax={Math.round(duration)}
+          tabIndex={0}
         >
-          {/* Thumb dot */}
           <div
             style={{
-              position: "absolute",
-              right: -4,
-              top: -3,
-              width: 9,
-              height: 9,
-              borderRadius: 9999,
-              background: accentColor,
-              boxShadow: `0 0 6px ${accentColor}60`,
+              height: "100%",
+              width: `${progress}%`,
+              background: `linear-gradient(to right, ${accentColor}, ${accentColorAlt})`,
+              borderRadius: "0 1px 1px 0",
+              transition: "width 0.15s linear",
+              position: "relative",
             }}
-          />
+          >
+            {/* Thumb dot */}
+            <div
+              style={{
+                position: "absolute",
+                right: -4,
+                top: -3,
+                width: 9,
+                height: 9,
+                borderRadius: 9999,
+                background: accentColor,
+                boxShadow: `0 0 6px ${accentColor}60`,
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Top accent line */}
       <div
@@ -922,10 +944,21 @@ export function OverPlayer({
                 ))}
           </div>
 
-          {/* Time elapsed */}
-          <span style={{ fontSize: 10, color: palette.fgDim, flexShrink: 0, fontVariantNumeric: "tabular-nums", minWidth: 32 }}>
-            {formatTime(currentTime)}
-          </span>
+          {/* Time elapsed or LIVE badge */}
+          {isLive ? (
+            <span style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "#fff",
+              background: "#ef4444", padding: "2px 6px", borderRadius: 3, flexShrink: 0,
+              textTransform: "uppercase" as const,
+              animation: playing ? "overplayer-live-pulse 2s ease-in-out infinite" : "none",
+            }}>
+              LIVE
+            </span>
+          ) : (
+            <span style={{ fontSize: 10, color: palette.fgDim, flexShrink: 0, fontVariantNumeric: "tabular-nums", minWidth: 32 }}>
+              {formatTime(currentTime)}
+            </span>
+          )}
 
           {/* Track info */}
           <div style={{ ...baseStyles.trackInfo, color: palette.fg }}>
@@ -937,10 +970,12 @@ export function OverPlayer({
             )}
           </div>
 
-          {/* Time remaining */}
-          <span style={{ fontSize: 10, color: palette.fgDim, flexShrink: 0, fontVariantNumeric: "tabular-nums", minWidth: 38 }}>
-            -{formatTime(Math.max(0, duration - currentTime))}
-          </span>
+          {/* Time remaining — hidden for live */}
+          {!isLive && (
+            <span style={{ fontSize: 10, color: palette.fgDim, flexShrink: 0, fontVariantNumeric: "tabular-nums", minWidth: 38 }}>
+              -{formatTime(Math.max(0, duration - currentTime))}
+            </span>
+          )}
 
           {/* Volume */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>

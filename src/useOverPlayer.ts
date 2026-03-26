@@ -45,7 +45,9 @@ export function useOverPlayer({
   const [muted, setMuted] = useState(false);
   const [shuffleOn, setShuffleOn] = useState(initialShuffle);
   const [repeatOne, setRepeatOne] = useState(false);
+  const [isLive, setIsLive] = useState(false);
   const prevVolumeRef = useRef(initialVolume);
+  const trackIdxRef = useRef(0);
   const callbacksRef = useRef({ onTrackChange, onPlay, onPause, onEnd });
   callbacksRef.current = { onTrackChange, onPlay, onPause, onEnd };
 
@@ -86,10 +88,17 @@ export function useOverPlayer({
     audio.preload = "auto";
     if (restoredTime > 0) audio.currentTime = restoredTime;
     audioRef.current = audio;
+    trackIdxRef.current = restoredIndex;
     setTrackIndex(restoredIndex);
 
-    const onTimeUpdate = () => { setCurrentTime(audio.currentTime); setDuration(audio.duration || 0); };
-    const onLoadedMetadata = () => setDuration(audio.duration || 0);
+    const checkLive = () => {
+      const track = orderedTracksRef.current[trackIdxRef.current];
+      if (track?.live === true) { setIsLive(true); return; }
+      if (track?.live === false) { setIsLive(false); return; }
+      setIsLive(!isFinite(audio.duration));
+    };
+    const onTimeUpdate = () => { setCurrentTime(audio.currentTime); setDuration(audio.duration || 0); checkLive(); };
+    const onLoadedMetadata = () => { setDuration(audio.duration || 0); checkLive(); };
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
 
@@ -143,6 +152,7 @@ export function useOverPlayer({
       } else {
         nextIdx = (trackIndex + 1) % tracks.length;
       }
+      trackIdxRef.current = nextIdx;
       setTrackIndex(nextIdx);
       audio.src = tracks[nextIdx].src;
       audio.play().then(() => setPlaying(true)).catch(() => {});
@@ -176,6 +186,7 @@ export function useOverPlayer({
       if (!audio) return;
       const tracks = orderedTracksRef.current;
       const nextIdx = (trackIndex + 1) % tracks.length;
+      trackIdxRef.current = nextIdx;
       setTrackIndex(nextIdx);
       audio.src = tracks[nextIdx].src;
       if (playing) audio.play().catch(() => {});
@@ -186,6 +197,7 @@ export function useOverPlayer({
       if (!audio) return;
       const tracks = orderedTracksRef.current;
       const prevIdx = (trackIndex - 1 + tracks.length) % tracks.length;
+      trackIdxRef.current = prevIdx;
       setTrackIndex(prevIdx);
       audio.src = tracks[prevIdx].src;
       if (playing) audio.play().catch(() => {});
@@ -217,6 +229,7 @@ export function useOverPlayer({
       if (!audio) return;
       const tracks = orderedTracksRef.current;
       if (index < 0 || index >= tracks.length) return;
+      trackIdxRef.current = index;
       setTrackIndex(index);
       audio.src = tracks[index].src;
       if (playing) audio.play().catch(() => {});
@@ -234,6 +247,7 @@ export function useOverPlayer({
     muted,
     shuffleOn,
     repeatOne,
+    isLive,
   };
 
   return [state, controls, orderedTracksRef.current];
