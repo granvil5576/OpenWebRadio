@@ -24,7 +24,7 @@ All notable changes to OverPlayer will be documented in this file.
 ## [1.0.0] - 2026-03-26
 
 ### Added
-- Initial release — persistent React audio player extracted from Warsaw Glitch Festival
+- Initial release — persistent React audio player
 - Dark and light themes
 - Shuffle, repeat one, volume control with mute
 - Minimizable UI (compact floating pill)

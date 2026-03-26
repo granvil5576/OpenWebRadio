@@ -4,7 +4,7 @@ A sleek, persistent audio player component for React. Fixed bottom bar with dark
 
 **[Live Demo](https://gameowermedia.github.io/OverPlayer/)** | **[npm](https://www.npmjs.com/package/@gameowermedia/overplayer)**
 
-Created by **[OverJK](https://github.com/GameOwerMedia)** — extracted from the [Warsaw Glitch Festival](https://glitch.festival) project.
+Created by **[OverJK](https://github.com/GameOwerMedia)**
 
 ---
 

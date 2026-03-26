@@ -554,10 +554,10 @@ function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autopla
    ═══════════════════════════════════════════════════════════════════ */
 
 const DEMO_TRACKS = [
-  { src: "audio/the-sims.mp3", title: "The Sims", artist: "Glitch Crew" },
-  { src: "audio/anthropocene-rock.mp3", title: "Anthropocene Rock", artist: "Glitch Crew" },
-  { src: "audio/in-the-void.mp3", title: "In the Void of Mediocre Acting", artist: "Glitch Crew" },
-  { src: "audio/sora-2.mp3", title: "I'm Sorry Too... (Sora 2)", artist: "Glitch Crew" },
+  { src: "audio/the-sims.mp3", title: "The Sims", artist: "OverJK" },
+  { src: "audio/anthropocene-rock.mp3", title: "Anthropocene Rock", artist: "OverJK" },
+  { src: "audio/in-the-void.mp3", title: "In the Void of Mediocre Acting", artist: "OverJK" },
+  { src: "audio/sora-2.mp3", title: "I'm Sorry Too... (Sora 2)", artist: "OverJK" },
 ];
 
 function App() {
@@ -627,7 +627,7 @@ function App() {
               <select value={label} onChange={e => setLabel(e.target.value)}>
                 <option value="OverPlayer">OverPlayer</option>
                 <option value="MyRadio">MyRadio</option>
-                <option value="GlitchFM">GlitchFM</option>
+                <option value="StreamFM">StreamFM</option>
                 <option value="">None</option>
               </select>
             </div>
@@ -684,8 +684,7 @@ const tracks = [
 
       {/* Footer */}
       <div className="page-footer">
-        Created by <a href="https://github.com/GameOwerMedia">OverJK</a> &mdash;
-        Extracted from the <a href="https://glitch.festival">Warsaw Glitch Festival</a> project
+        Created by <a href="https://github.com/GameOwerMedia">OverJK</a>
       </div>
 
       {/* The Player */}
