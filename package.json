@@ -1,7 +1,7 @@
 {
   "name": "@gameowermedia/overplayer",
   "version": "1.2.0",
-  "description": "A sleek, persistent audio player component for React. Features shuffle, repeat, volume control, session persistence, minimizable UI, and autoplay unlock.",
+  "description": "Drop-in React audio player with live radio support. Plays local files, Icecast/Shoutcast streams, and podcasts. Persistent playback, dark/light themes, playlist drawer, keyboard shortcuts, zero dependencies.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
