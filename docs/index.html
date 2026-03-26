@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OverPlayer — Live Demo</title>
+  <meta name="description" content="A sleek, persistent audio player component for React. Dark & light themes, shuffle, repeat, playlist, keyboard shortcuts." />
+  <meta property="og:title" content="OverPlayer — Persistent React Audio Player" />
+  <meta property="og:description" content="Sleek audio player with dark/light themes, shuffle, repeat, playlist drawer, session persistence, and keyboard shortcuts." />
+  <meta property="og:type" content="website" />
+
+  <!-- React 19 from CDN -->
+  <script crossorigin src="https://unpkg.com/react@19/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@19/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0e;
+      --fg: #e8e8ec;
+      --fg-dim: rgba(255,255,255,0.4);
+      --accent: #00e5ff;
+      --accent-alt: #ff2d7b;
+      --card-bg: rgba(255,255,255,0.03);
+      --card-border: rgba(255,255,255,0.06);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding-bottom: 120px;
+      overflow-x: hidden;
+    }
+
+    body.light-mode {
+      --bg: #f8f8fa;
+      --fg: #1a1a2e;
+      --fg-dim: rgba(0,0,0,0.4);
+      --card-bg: rgba(0,0,0,0.02);
+      --card-border: rgba(0,0,0,0.06);
+    }
+
+    /* Background glows */
+    .glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .glow-1 { width: 500px; height: 500px; background: var(--accent); top: -100px; left: -100px; }
+    .glow-2 { width: 400px; height: 400px; background: var(--accent-alt); bottom: 100px; right: -80px; }
+    .glow-3 { width: 300px; height: 300px; background: #a855f7; top: 40%; left: 50%; }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 24px 40px;
+    }
+
+    /* Hero */
+    .hero { text-align: center; margin-bottom: 60px; }
+    .hero-badge {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(0,229,255,0.2);
+      padding: 4px 14px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--fg-dim);
+      max-width: 540px;
+      margin: 0 auto 28px;
+    }
+
+    /* Badges row */
+    .badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--card-border);
+      color: var(--fg-dim);
+      background: var(--card-bg);
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    /* Links */
+    .links {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      box-shadow: 0 4px 16px rgba(0,229,255,0.25);
+    }
+    .btn-secondary {
+      background: var(--card-bg);
+      color: var(--fg);
+      border: 1px solid var(--card-border);
+    }
+
+    /* Section */
+    .section { margin-bottom: 48px; }
+    .section h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Controls panel */
+    .controls-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .control-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .control-card label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--fg-dim);
+      margin-bottom: 8px;
+    }
+    .control-card select, .control-card input[type="color"] {
+      width: 100%;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 14px;
+    }
+    .control-card input[type="color"] {
+      height: 36px;
+      padding: 2px;
+      cursor: pointer;
+    }
+
+    /* Keyboard shortcuts */
+    .shortcuts {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+    }
+    .shortcut {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 24px;
+      padding: 0 6px;
+      border-radius: 4px;
+      background: var(--card-border);
+      font-size: 11px;
+      font-family: monospace;
+      font-weight: 600;
+      color: var(--fg);
+      flex-shrink: 0;
+    }
+
+    /* Track list */
+    .track-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .track-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+    }
+    .track-num {
+      font-size: 12px;
+      color: var(--fg-dim);
+      width: 24px;
+      text-align: center;
+    }
+    .track-title { font-size: 14px; }
+    .track-artist { font-size: 12px; color: var(--fg-dim); margin-left: 8px; }
+
+    /* Footer */
+    .page-footer {
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--fg-dim);
+      font-size: 13px;
+    }
+    .page-footer a { color: var(--accent); text-decoration: none; }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      .container { padding: 40px 16px 30px; }
+      .controls-panel { grid-template-columns: 1fr; }
+      .shortcuts { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+<div class="glow glow-3"></div>
+
+<div id="root"></div>
+
+<script type="text/babel">
+/* ═══════════════════════════════════════════════════════════════════
+   OVERPLAYER — INLINE BUILD FOR DEMO
+   (In production, import from @gameowermedia/overplayer)
+   ═══════════════════════════════════════════════════════════════════ */
+
+const { useState, useRef, useEffect, useCallback } = React;
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function formatTime(s) {
+  if (!isFinite(s) || s < 0) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+const themePalettes = {
+  dark: {
+    bg: "rgba(10, 10, 14, 0.92)", bgSolid: "#0a0a0e", fg: "rgba(255,255,255,0.7)",
+    fgDim: "rgba(255,255,255,0.3)", fgMid: "rgba(255,255,255,0.5)",
+    border: "rgba(255,255,255,0.08)", divider: "rgba(255,255,255,0.08)",
+    vizOff: "rgba(255,255,255,0.08)", mutedColor: "#ef4444",
+    progressBg: "rgba(255,255,255,0.08)", playlistBg: "rgba(10,10,14,0.97)",
+    playlistHover: "rgba(255,255,255,0.05)", playlistActive: "rgba(255,255,255,0.08)",
+  },
+  light: {
+    bg: "rgba(252,252,253,0.94)", bgSolid: "#fcfcfd", fg: "rgba(0,0,0,0.75)",
+    fgDim: "rgba(0,0,0,0.3)", fgMid: "rgba(0,0,0,0.5)",
+    border: "rgba(0,0,0,0.08)", divider: "rgba(0,0,0,0.1)",
+    vizOff: "rgba(0,0,0,0.08)", mutedColor: "#dc2626",
+    progressBg: "rgba(0,0,0,0.08)", playlistBg: "rgba(252,252,253,0.98)",
+    playlistHover: "rgba(0,0,0,0.04)", playlistActive: "rgba(0,0,0,0.06)",
+  },
+};
+
+const instances = new Map();
+
+function getOrCreateInstance(key, tracks, initialVolume, shouldShuffle, autoplay) {
+  if (instances.has(key)) return instances.get(key);
+  let orderedTracks;
+  let restoredTime = 0, restoredIndex = 0, shouldPlay = autoplay;
+  try {
+    const savedOrder = sessionStorage.getItem(`${key}-order`);
+    if (savedOrder) {
+      const order = JSON.parse(savedOrder);
+      const restored = order.map(src => tracks.find(t => t.src === src)).filter(Boolean);
+      orderedTracks = restored.length === tracks.length ? restored : (shouldShuffle ? shuffleArray(tracks) : [...tracks]);
+    } else {
+      orderedTracks = shouldShuffle ? shuffleArray(tracks) : [...tracks];
+    }
+  } catch { orderedTracks = shouldShuffle ? shuffleArray(tracks) : [...tracks]; }
+  try {
+    const saved = sessionStorage.getItem(key);
+    if (saved) {
+      const { src, time, wasPlaying } = JSON.parse(saved);
+      const idx = orderedTracks.findIndex(t => t.src === src);
+      if (idx >= 0) { restoredIndex = idx; restoredTime = time || 0; shouldPlay = wasPlaying; }
+    }
+  } catch {}
+  try { sessionStorage.setItem(`${key}-order`, JSON.stringify(orderedTracks.map(t => t.src))); } catch {}
+  const audio = new Audio(orderedTracks[restoredIndex].src);
+  audio.volume = initialVolume; audio.preload = "auto";
+  if (restoredTime > 0) audio.currentTime = restoredTime;
+  const instance = { audio, tracks: orderedTracks, trackIndex: restoredIndex, playing: false, hasInteracted: false, saveInterval: null };
+  if (shouldPlay) {
+    audio.play().then(() => { instance.playing = true; instance.hasInteracted = true; }).catch(() => {
+      const evts = ["click","touchstart","keydown","mousemove","scroll","pointerdown"];
+      const unlock = () => { if (!instance.playing) audio.play().then(() => { instance.playing = true; instance.hasInteracted = true; }).catch(() => {}); evts.forEach(e => document.removeEventListener(e, unlock)); };
+      evts.forEach(e => document.addEventListener(e, unlock, { once: true, passive: true }));
+    });
+  }
+  instance.saveInterval = setInterval(() => { try { sessionStorage.setItem(key, JSON.stringify({ src: instance.tracks[instance.trackIndex]?.src || "", time: instance.audio.currentTime || 0, wasPlaying: instance.playing })); } catch {} }, 500);
+  instances.set(key, instance);
+  return instance;
+}
+
+/* Icons */
+const PlayIcon = ({size=20,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M8 5v14l11-7z"/></svg>;
+const PauseIcon = ({size=20,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>;
+const PrevIcon = ({size=14}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>;
+const NextIcon = ({size=14}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>;
+const ShuffleIcon = ({size=14}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>;
+const RepeatIcon = ({size=14}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>;
+const VolumeIcon = ({size=14,muted,level}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">{muted||level===0?<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>:level<0.5?<path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>:<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>}</svg>;
+const MinimizeIcon = ({size=14}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>;
+const ExpandIcon = ({size=12}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l-6 6h12z"/></svg>;
+const PlaylistIcon = ({size=14}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>;
+
+const btnBase = { background:"none", border:"none", padding:8, cursor:"pointer", display:"flex", alignItems:"center", transition:"opacity 0.15s", flexShrink:0 };
+
+/* Styles injection */
+let injected = false;
+function injectCSS() {
+  if (injected) return; injected = true;
+  const s = document.createElement("style");
+  s.textContent = `@keyframes overplayer-bar{0%{transform:scaleY(.2)}100%{transform:scaleY(1)}} @keyframes overplayer-playlist-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} @media(prefers-reduced-motion:reduce){.overplayer-viz-bar{animation:none!important}}`;
+  document.head.appendChild(s);
+}
+
+function useResolvedTheme(theme) {
+  const [resolved, setResolved] = useState(() => {
+    if (theme !== "auto") return theme;
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  });
+  useEffect(() => {
+    if (theme !== "auto") { setResolved(theme); return; }
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    const h = e => setResolved(e.matches ? "light" : "dark");
+    setResolved(mq.matches ? "light" : "dark");
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, [theme]);
+  return resolved;
+}
+
+function OverPlayer({ tracks, theme="dark", shuffle:initialShuffle=true, autoplay=true, volume:initVol=0.3, storageKey="overplayer", accentColor="#00e5ff", accentColorAlt="#ff2d7b", brandLabel="OverPlayer", subtitle, className, footer, keyboardShortcuts=true, onTrackChange, onPlay, onPause, onEnd }) {
+  const inst = getOrCreateInstance(storageKey, tracks, initVol, initialShuffle, autoplay);
+  const resolved = useResolvedTheme(theme);
+  const p = themePalettes[resolved];
+  const cbRef = useRef({ onTrackChange, onPlay, onPause, onEnd });
+  cbRef.current = { onTrackChange, onPlay, onPause, onEnd };
+  const [playing, setPlaying] = useState(inst.playing);
+  const [hasInteracted, setHasInteracted] = useState(inst.hasInteracted);
+  const [trackIndex, setTrackIndex] = useState(inst.trackIndex);
+  const [shuffleOn, setShuffleOn] = useState(initialShuffle);
+  const [repeatOne, setRepeatOne] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  const [vol, setVol] = useState(initVol);
+  const [muted, setMuted] = useState(false);
+  const [curTime, setCurTime] = useState(0);
+  const [dur, setDur] = useState(0);
+  const [showPL, setShowPL] = useState(false);
+  const prevVolRef = useRef(initVol);
+  const progRef = useRef(null);
+
+  useEffect(() => { injectCSS(); }, []);
+  useEffect(() => {
+    setPlaying(inst.playing); setHasInteracted(inst.hasInteracted); setTrackIndex(inst.trackIndex);
+    const id = setInterval(() => { if (inst.playing !== playing) setPlaying(inst.playing); if (inst.hasInteracted !== hasInteracted) setHasInteracted(inst.hasInteracted); }, 300);
+    return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    const a = inst.audio;
+    const onTU = () => { setCurTime(a.currentTime); setDur(a.duration || 0); };
+    const onLM = () => setDur(a.duration || 0);
+    a.addEventListener("timeupdate", onTU); a.addEventListener("loadedmetadata", onLM);
+    return () => { a.removeEventListener("timeupdate", onTU); a.removeEventListener("loadedmetadata", onLM); };
+  }, [inst.audio]);
+  useEffect(() => {
+    const a = inst.audio;
+    const onEnded = () => {
+      cbRef.current.onEnd?.();
+      if (repeatOne) { a.currentTime = 0; a.play().catch(() => {}); return; }
+      let ni; if (shuffleOn) { ni = Math.floor(Math.random()*inst.tracks.length); if (ni===inst.trackIndex&&inst.tracks.length>1) ni=(ni+1)%inst.tracks.length; } else { ni=(inst.trackIndex+1)%inst.tracks.length; }
+      inst.trackIndex = ni; setTrackIndex(ni); a.src = inst.tracks[ni].src; a.play().catch(() => {});
+      cbRef.current.onTrackChange?.(inst.tracks[ni], ni);
+    };
+    a.addEventListener("ended", onEnded); return () => a.removeEventListener("ended", onEnded);
+  }, [trackIndex, repeatOne, shuffleOn]);
+
+  useEffect(() => {
+    if (!keyboardShortcuts) return;
+    const h = e => {
+      const tag = e.target?.tagName; if (tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT") return;
+      switch(e.code) {
+        case "Space": e.preventDefault(); toggle(); break;
+        case "ArrowRight": e.preventDefault(); inst.audio.currentTime = Math.min(inst.audio.currentTime+5, inst.audio.duration||0); break;
+        case "ArrowLeft": e.preventDefault(); inst.audio.currentTime = Math.max(inst.audio.currentTime-5, 0); break;
+        case "ArrowUp": e.preventDefault(); changeVol(Math.min((inst.audio.volume||0)+0.05, 1)); break;
+        case "ArrowDown": e.preventDefault(); changeVol(Math.max((inst.audio.volume||0)-0.05, 0)); break;
+        case "KeyN": nextTrack(); break;
+        case "KeyP": prevTrack(); break;
+        case "KeyM": toggleMute(); break;
+        case "KeyL": setShowPL(s => !s); break;
+      }
+    };
+    document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
+  }, [keyboardShortcuts, playing, trackIndex, muted, vol]);
+
+  const toggle = useCallback(() => {
+    if (playing) { inst.audio.pause(); inst.playing=false; setPlaying(false); cbRef.current.onPause?.(); }
+    else { inst.audio.play().then(() => { inst.playing=true; inst.hasInteracted=true; setPlaying(true); setHasInteracted(true); cbRef.current.onPlay?.(); }).catch(() => {}); }
+  }, [playing, inst]);
+  const nextTrack = useCallback(() => { const ni=(trackIndex+1)%inst.tracks.length; inst.trackIndex=ni; setTrackIndex(ni); inst.audio.src=inst.tracks[ni].src; if(playing) inst.audio.play().catch(()=>{}); cbRef.current.onTrackChange?.(inst.tracks[ni],ni); }, [trackIndex, playing, inst]);
+  const prevTrack = useCallback(() => { const pi=(trackIndex-1+inst.tracks.length)%inst.tracks.length; inst.trackIndex=pi; setTrackIndex(pi); inst.audio.src=inst.tracks[pi].src; if(playing) inst.audio.play().catch(()=>{}); cbRef.current.onTrackChange?.(inst.tracks[pi],pi); }, [trackIndex, playing, inst]);
+  const jumpTo = useCallback(i => { inst.trackIndex=i; setTrackIndex(i); inst.audio.src=inst.tracks[i].src; inst.audio.play().then(()=>{inst.playing=true;inst.hasInteracted=true;setPlaying(true);setHasInteracted(true);}).catch(()=>{}); setShowPL(false); cbRef.current.onTrackChange?.(inst.tracks[i],i); }, [inst]);
+  const changeVol = useCallback(v => { inst.audio.volume=v; setVol(v); setMuted(v===0); }, [inst]);
+  const toggleMute = useCallback(() => { if(muted){const r=prevVolRef.current||0.3;inst.audio.volume=r;setVol(r);setMuted(false);}else{prevVolRef.current=vol;inst.audio.volume=0;setVol(0);setMuted(true);} }, [muted, vol, inst]);
+  const handleSeek = useCallback(e => { const bar=progRef.current; if(!bar||!dur) return; const rect=bar.getBoundingClientRect(); const ratio=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)); inst.audio.currentTime=ratio*dur; }, [dur, inst]);
+
+  const ct = inst.tracks[trackIndex];
+  const prog = dur > 0 ? (curTime/dur)*100 : 0;
+
+  if (minimized) return (
+    <div className={className}>
+      {footer}
+      <div style={{position:"fixed",bottom:16,right:16,zIndex:50,display:"flex",alignItems:"center",gap:2,backdropFilter:"blur(16px)",border:`1px solid ${p.border}`,borderRadius:9999,padding:"2px 4px",background:p.bg}}>
+        {ct?.cover && <img src={ct.cover} alt="" style={{width:20,height:20,borderRadius:9999,objectFit:"cover",marginLeft:4}}/>}
+        <button onClick={prevTrack} style={{...btnBase,padding:6,color:p.fgDim}}><PrevIcon size={12}/></button>
+        <button onClick={toggle} style={{...btnBase,padding:6,color:accentColor}}>{playing?<PauseIcon size={16} color={accentColor}/>:<PlayIcon size={16} color={accentColor}/>}</button>
+        <button onClick={nextTrack} style={{...btnBase,padding:6,color:p.fgDim}}><NextIcon size={12}/></button>
+        <div style={{width:1,height:16,background:p.divider,margin:"0 2px"}}/>
+        <button onClick={()=>setMinimized(false)} style={{...btnBase,padding:6,color:p.fgDim}}><ExpandIcon/></button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:50,fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'}} className={className}>
+      {showPL && (
+        <div style={{position:"absolute",bottom:"100%",left:0,right:0,maxHeight:280,overflowY:"auto",background:p.playlistBg,backdropFilter:"blur(24px)",borderTop:`1px solid ${p.border}`,animation:"overplayer-playlist-in 0.2s ease-out"}}>
+          <div style={{margin:"0 auto",maxWidth:1400,padding:"8px 12px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <span style={{fontSize:11,letterSpacing:"0.1em",textTransform:"uppercase",color:p.fgDim,fontWeight:600}}>Playlist ({inst.tracks.length})</span>
+              <span style={{fontSize:10,color:p.fgDim}}>Press L to toggle</span>
+            </div>
+            {inst.tracks.map((t,i) => (
+              <button key={t.src+i} onClick={()=>jumpTo(i)} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"8px 10px",border:"none",borderRadius:6,cursor:"pointer",background:i===trackIndex?p.playlistActive:"transparent",color:i===trackIndex?accentColor:p.fg,fontSize:13,textAlign:"left",letterSpacing:"0.03em",transition:"background 0.12s",fontFamily:"inherit"}}
+                onMouseEnter={e=>{if(i!==trackIndex)e.currentTarget.style.background=p.playlistHover}}
+                onMouseLeave={e=>{e.currentTarget.style.background=i===trackIndex?p.playlistActive:"transparent"}}>
+                <span style={{width:20,textAlign:"center",flexShrink:0,fontSize:11,color:i===trackIndex?accentColor:p.fgDim}}>
+                  {i===trackIndex&&playing?<span style={{display:"inline-flex",alignItems:"flex-end",gap:1,height:12}}>{[0,1,2].map(b=><span key={b} className="overplayer-viz-bar" style={{display:"inline-block",width:2,background:accentColor,borderRadius:"1px 1px 0 0",height:"100%",animation:`overplayer-bar ${0.3+b*0.15}s ease-in-out infinite alternate`}}/>)}</span>:i+1}
+                </span>
+                {t.cover && <img src={t.cover} alt="" style={{width:28,height:28,borderRadius:4,objectFit:"cover",flexShrink:0}}/>}
+                <span style={{flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.title}{t.artist&&<span style={{color:p.fgDim,marginLeft:8,fontSize:12}}>{t.artist}</span>}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div ref={progRef} onClick={handleSeek} style={{height:3,background:p.progressBg,cursor:"pointer",position:"relative"}} role="slider" aria-label="Seek" tabIndex={0}>
+        <div style={{height:"100%",width:`${prog}%`,background:`linear-gradient(to right,${accentColor},${accentColorAlt})`,borderRadius:"0 1px 1px 0",transition:"width 0.15s linear",position:"relative"}}>
+          <div style={{position:"absolute",right:-4,top:-3,width:9,height:9,borderRadius:9999,background:accentColor,boxShadow:`0 0 6px ${accentColor}60`}}/>
+        </div>
+      </div>
+      <div style={{height:1,background:`linear-gradient(to right,${accentColor}50,${accentColorAlt}50,${accentColor}50)`}}/>
+      <div style={{backdropFilter:"blur(24px)",borderTop:`1px solid ${p.border}`,background:p.bg}}>
+        <div style={{margin:"0 auto",maxWidth:1400,padding:"0 12px",display:"flex",alignItems:"center",height:48,gap:8}}>
+          {ct?.cover && <img src={ct.cover} alt="" style={{width:34,height:34,borderRadius:4,objectFit:"cover",flexShrink:0,border:`1px solid ${p.border}`}}/>}
+          <button onClick={prevTrack} style={{...btnBase,color:p.fgMid}}><PrevIcon/></button>
+          <button onClick={toggle} style={{...btnBase,color:accentColor}}>{playing?<PauseIcon color={accentColor}/>:<PlayIcon color={accentColor}/>}</button>
+          <button onClick={nextTrack} style={{...btnBase,color:p.fgMid}}><NextIcon/></button>
+          <button onClick={()=>setShuffleOn(!shuffleOn)} style={{...btnBase,color:shuffleOn?accentColor:p.fgDim}} title={shuffleOn?"Shuffle: ON":"Shuffle: OFF"}><ShuffleIcon/></button>
+          <button onClick={()=>setRepeatOne(!repeatOne)} style={{...btnBase,color:repeatOne?accentColorAlt:p.fgDim,position:"relative"}} title={repeatOne?"Repeat: ONE":"Repeat: OFF"}><RepeatIcon/>{repeatOne&&<span style={{position:"absolute",fontSize:6,fontWeight:"bold",top:4,right:2,color:accentColorAlt}}>1</span>}</button>
+          <div style={{width:1,height:20,background:p.divider,flexShrink:0}}/>
+          <div style={{display:"flex",alignItems:"flex-end",gap:2,height:16,flexShrink:0}}>
+            {playing?Array.from({length:5}).map((_,i)=><div key={i} className="overplayer-viz-bar" style={{width:2,borderRadius:"1px 1px 0 0",background:i%2===0?accentColor:accentColorAlt,opacity:0.8,height:"100%",animation:`overplayer-bar ${0.3+i*0.12}s ease-in-out infinite alternate`,animationDelay:`${i*0.08}s`}}/>):Array.from({length:5}).map((_,i)=><div key={i} style={{width:2,height:4,borderRadius:"1px 1px 0 0",background:p.vizOff}}/>)}
+          </div>
+          <span style={{fontSize:10,color:p.fgDim,flexShrink:0,fontVariantNumeric:"tabular-nums",minWidth:32}}>{formatTime(curTime)}</span>
+          <div style={{flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:13,letterSpacing:"0.06em",color:p.fg}}>
+            {hasInteracted?ct?.title:tracks[0]?.title||""}
+            {(subtitle||ct?.artist)&&<span style={{color:p.fgDim,marginLeft:8}}>{subtitle||ct?.artist}</span>}
+          </div>
+          <span style={{fontSize:10,color:p.fgDim,flexShrink:0,fontVariantNumeric:"tabular-nums",minWidth:38}}>-{formatTime(Math.max(0,dur-curTime))}</span>
+          <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+            <button onClick={toggleMute} style={{...btnBase,padding:6,color:muted?p.mutedColor:p.fgDim}}><VolumeIcon muted={muted} level={vol}/></button>
+            <input type="range" min="0" max="1" step="0.05" value={vol} onChange={e=>changeVol(parseFloat(e.target.value))} style={{width:56,height:4,cursor:"pointer",accentColor}} aria-label="Volume"/>
+          </div>
+          <div style={{width:1,height:20,background:p.divider,flexShrink:0}}/>
+          <button onClick={()=>setShowPL(!showPL)} style={{...btnBase,color:showPL?accentColor:p.fgDim}} title="Playlist"><PlaylistIcon/></button>
+          <button onClick={()=>{setMinimized(true);setShowPL(false);}} style={{...btnBase,color:p.fgDim}}><MinimizeIcon/></button>
+          {brandLabel&&<span style={{fontSize:11,letterSpacing:"0.08em",color:p.fgDim,marginLeft:4,flexShrink:0}}>{brandLabel}</span>}
+        </div>
+      </div>
+      {footer}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DEMO APP
+   ═══════════════════════════════════════════════════════════════════ */
+
+const DEMO_TRACKS = [
+  { src: "audio/the-sims.mp3", title: "The Sims", artist: "Glitch Crew" },
+  { src: "audio/anthropocene-rock.mp3", title: "Anthropocene Rock", artist: "Glitch Crew" },
+  { src: "audio/in-the-void.mp3", title: "In the Void of Mediocre Acting", artist: "Glitch Crew" },
+  { src: "audio/sora-2.mp3", title: "I'm Sorry Too... (Sora 2)", artist: "Glitch Crew" },
+];
+
+function App() {
+  const [theme, setTheme] = useState("dark");
+  const [accent, setAccent] = useState("#00e5ff");
+  const [accentAlt, setAccentAlt] = useState("#ff2d7b");
+  const [label, setLabel] = useState("OverPlayer");
+
+  useEffect(() => {
+    document.body.className = theme === "light" ? "light-mode" : "";
+  }, [theme]);
+
+  return (
+    <>
+      <div className="container">
+        {/* Hero */}
+        <div className="hero">
+          <div className="hero-badge">Open Source Audio Player</div>
+          <h1>
+            <span>Over</span>Player
+          </h1>
+          <p>
+            A persistent React audio player with dark &amp; light themes,
+            playlist drawer, keyboard shortcuts, progress seek, and session persistence.
+          </p>
+
+          <div className="badges">
+            <span className="badge"><span className="badge-dot" style={{background:"#22c55e"}}></span> Zero Dependencies</span>
+            <span className="badge"><span className="badge-dot" style={{background:"#3b82f6"}}></span> TypeScript</span>
+            <span className="badge"><span className="badge-dot" style={{background:"#a855f7"}}></span> React 18+</span>
+            <span className="badge"><span className="badge-dot" style={{background:"#f59e0b"}}></span> MIT License</span>
+          </div>
+
+          <div className="links">
+            <a href="https://github.com/GameOwerMedia/OverPlayer" className="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+              GitHub
+            </a>
+            <a href="https://www.npmjs.com/package/@gameowermedia/overplayer" className="btn btn-secondary">
+              npm install
+            </a>
+          </div>
+        </div>
+
+        {/* Customization */}
+        <div className="section">
+          <h2>Customize</h2>
+          <div className="controls-panel">
+            <div className="control-card">
+              <label>Theme</label>
+              <select value={theme} onChange={e => setTheme(e.target.value)}>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="auto">Auto (OS)</option>
+              </select>
+            </div>
+            <div className="control-card">
+              <label>Accent Color</label>
+              <input type="color" value={accent} onChange={e => setAccent(e.target.value)} />
+            </div>
+            <div className="control-card">
+              <label>Accent Alt</label>
+              <input type="color" value={accentAlt} onChange={e => setAccentAlt(e.target.value)} />
+            </div>
+            <div className="control-card">
+              <label>Brand Label</label>
+              <select value={label} onChange={e => setLabel(e.target.value)}>
+                <option value="OverPlayer">OverPlayer</option>
+                <option value="MyRadio">MyRadio</option>
+                <option value="GlitchFM">GlitchFM</option>
+                <option value="">None</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Demo Playlist */}
+        <div className="section">
+          <h2>Demo Playlist</h2>
+          <div className="track-list">
+            {DEMO_TRACKS.map((t, i) => (
+              <div key={i} className="track-item">
+                <span className="track-num">{i + 1}</span>
+                <span className="track-title">{t.title}</span>
+                <span className="track-artist">{t.artist}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Keyboard Shortcuts */}
+        <div className="section">
+          <h2>Keyboard Shortcuts</h2>
+          <div className="shortcuts">
+            <div className="shortcut"><span className="key">Space</span> Play / Pause</div>
+            <div className="shortcut"><span className="key">N</span> Next Track</div>
+            <div className="shortcut"><span className="key">P</span> Previous Track</div>
+            <div className="shortcut"><span className="key">M</span> Mute / Unmute</div>
+            <div className="shortcut"><span className="key">L</span> Toggle Playlist</div>
+            <div className="shortcut"><span className="key">&larr;</span> Seek -5s</div>
+            <div className="shortcut"><span className="key">&rarr;</span> Seek +5s</div>
+            <div className="shortcut"><span className="key">&uarr;</span> Volume Up</div>
+            <div className="shortcut"><span className="key">&darr;</span> Volume Down</div>
+          </div>
+        </div>
+
+        {/* Quick Start */}
+        <div className="section">
+          <h2>Quick Start</h2>
+          <pre style={{background:"var(--card-bg)",border:"1px solid var(--card-border)",borderRadius:10,padding:"16px 20px",fontSize:13,overflowX:"auto",lineHeight:1.7}}>
+{`npm install @gameowermedia/overplayer
+
+import { OverPlayer } from "@gameowermedia/overplayer";
+
+const tracks = [
+  { src: "/audio/track-01.mp3", title: "Track One", artist: "Artist" },
+  { src: "/audio/track-02.mp3", title: "Track Two" },
+];
+
+<OverPlayer tracks={tracks} theme="dark" />`}
+          </pre>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="page-footer">
+        Created by <a href="https://github.com/GameOwerMedia">OverJK</a> &mdash;
+        Extracted from the <a href="https://glitch.festival">Warsaw Glitch Festival</a> project
+      </div>
+
+      {/* The Player */}
+      <OverPlayer
+        tracks={DEMO_TRACKS}
+        theme={theme}
+        accentColor={accent}
+        accentColorAlt={accentAlt}
+        brandLabel={label}
+        autoplay={false}
+      />
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>

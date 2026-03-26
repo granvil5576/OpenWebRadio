@@ -1,2 +1,8 @@
 export { OverPlayer } from "./OverPlayer";
-export type { OverPlayerProps, Track } from "./types";
+export { useOverPlayer } from "./useOverPlayer";
+export type {
+  OverPlayerProps,
+  Track,
+  OverPlayerState,
+  OverPlayerControls,
+} from "./types";

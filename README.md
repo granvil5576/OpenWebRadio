@@ -1,6 +1,8 @@
 # OverPlayer
 
-A sleek, persistent audio player component for React. Fixed bottom bar with shuffle, repeat, volume control, minimizable UI, session persistence, and automatic autoplay unlock. Ships with **dark** and **light** themes.
+A sleek, persistent audio player component for React. Fixed bottom bar with dark & light themes, playlist drawer, progress seek, keyboard shortcuts, shuffle, repeat, volume control, session persistence, and autoplay unlock.
+
+**[Live Demo](https://gameowermedia.github.io/OverPlayer/)** | **[npm](https://www.npmjs.com/package/@gameowermedia/overplayer)**
 
 Created by **[OverJK](https://github.com/GameOwerMedia)** — extracted from the [Warsaw Glitch Festival](https://glitch.festival) project.
 
@@ -8,19 +10,24 @@ Created by **[OverJK](https://github.com/GameOwerMedia)** — extracted from the
 
 ## Features
 
-- **Dark & Light themes** — built-in `"dark"` and `"light"` modes, switch with a single prop
+- **Dark, Light & Auto themes** — `"dark"`, `"light"`, or `"auto"` (follows OS preference)
+- **Progress bar with seek** — clickable timeline with elapsed/remaining time display
+- **Playlist drawer** — slide-up track list, click to jump, animated playing indicator
+- **Keyboard shortcuts** — Space, arrows, N/P, M, L — full playback control without a mouse
+- **Cover art** — optional thumbnail per track in the bar and playlist
 - **Persistent playback** — audio survives page navigation and React remounts
-- **Session restore** — remembers track, position, and playing state across page reloads
+- **Session restore** — remembers track, position, and playing state across reloads
 - **Shuffle & Repeat** — shuffle mode and repeat-one toggle
 - **Volume control** — slider + mute toggle with volume memory
 - **Minimizable** — collapses to a compact floating pill
 - **Autoplay unlock** — gracefully handles browser autoplay restrictions
 - **Visualizer bars** — animated mini bars when playing
+- **Event callbacks** — `onTrackChange`, `onPlay`, `onPause`, `onEnd`
+- **Headless hook** — `useOverPlayer()` for building your own UI
 - **Customizable** — accent colors, brand label, footer slot
-- **Accessible** — ARIA labels, keyboard-friendly controls
-- **Respects `prefers-reduced-motion`** — disables animations for users who prefer it
+- **Accessible** — ARIA labels, keyboard-friendly, `prefers-reduced-motion`
 - **Zero dependencies** — only React as a peer dependency
-- **TypeScript** — fully typed props and exports
+- **TypeScript** — fully typed props, state, and controls
 
 ---
 
@@ -69,13 +76,11 @@ export default function App() {
 }
 ```
 
-The player renders as a fixed bottom bar — just drop it anywhere in your component tree.
+The player renders as a fixed bottom bar — drop it anywhere in your component tree.
 
 ---
 
 ## Themes
-
-OverPlayer ships with two built-in themes. Pass the `theme` prop to switch:
 
 ### Dark (default)
 
@@ -83,17 +88,37 @@ OverPlayer ships with two built-in themes. Pass the `theme` prop to switch:
 <OverPlayer tracks={tracks} theme="dark" />
 ```
 
-Dark translucent background, light text. Ideal for dark UIs, media apps, and creative projects.
-
 ### Light
 
 ```tsx
 <OverPlayer tracks={tracks} theme="light" />
 ```
 
-Light frosted background, dark text. Ideal for light UIs, documentation sites, and corporate apps.
+### Auto (follows OS)
 
-Both themes support full accent color customization — the `accentColor` and `accentColorAlt` props work independently of the theme.
+```tsx
+<OverPlayer tracks={tracks} theme="auto" />
+```
+
+Listens to `prefers-color-scheme` and switches live when the OS preference changes.
+
+---
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Space` | Play / Pause |
+| `N` | Next track |
+| `P` | Previous track |
+| `M` | Mute / Unmute |
+| `L` | Toggle playlist |
+| `Arrow Left` | Seek -5 seconds |
+| `Arrow Right` | Seek +5 seconds |
+| `Arrow Up` | Volume up |
+| `Arrow Down` | Volume down |
+
+Shortcuts are enabled by default. Disable with `keyboardShortcuts={false}`.
 
 ---
 
@@ -102,45 +127,132 @@ Both themes support full accent color customization — the `accentColor` and `a
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `tracks` | `Track[]` | **required** | Array of tracks to play |
-| `theme` | `"dark" \| "light"` | `"dark"` | Color theme |
+| `theme` | `"dark" \| "light" \| "auto"` | `"dark"` | Color theme |
 | `shuffle` | `boolean` | `true` | Enable shuffle by default |
 | `autoplay` | `boolean` | `true` | Attempt autoplay on load |
 | `volume` | `number` | `0.3` | Initial volume (0–1) |
 | `storageKey` | `string` | `"overplayer"` | Session storage key for persistence |
-| `accentColor` | `string` | `"#00e5ff"` | Primary accent color (play button, active shuffle) |
-| `accentColorAlt` | `string` | `"#ff2d7b"` | Secondary accent (repeat toggle, visualizer bars) |
-| `brandLabel` | `string` | `"OverPlayer"` | Label on the right side of expanded player |
+| `accentColor` | `string` | `"#00e5ff"` | Primary accent color |
+| `accentColorAlt` | `string` | `"#ff2d7b"` | Secondary accent color |
+| `brandLabel` | `string` | `"OverPlayer"` | Label on the right side |
 | `subtitle` | `string` | — | Text shown next to track title |
-| `className` | `string` | — | Additional CSS class for root container |
-| `footer` | `ReactNode` | — | Custom element rendered below the player |
+| `className` | `string` | — | Additional CSS class |
+| `footer` | `ReactNode` | — | Custom element below the player |
+| `keyboardShortcuts` | `boolean` | `true` | Enable keyboard shortcuts |
+| `onTrackChange` | `(track, index) => void` | — | Called when track changes |
+| `onPlay` | `() => void` | — | Called on play |
+| `onPause` | `() => void` | — | Called on pause |
+| `onEnd` | `() => void` | — | Called when track ends naturally |
 
 ### Track
 
 ```ts
 interface Track {
-  src: string;     // URL or path to audio file
-  title: string;   // Display title
-  artist?: string; // Optional artist name (shown as subtitle)
+  src: string;      // URL or path to audio file
+  title: string;    // Display title
+  artist?: string;  // Optional artist name
+  cover?: string;   // Optional cover art URL
 }
 ```
 
 ---
 
+## Headless Hook
+
+Build your own player UI with full access to state and controls:
+
+```tsx
+import { useOverPlayer } from "@gameowermedia/overplayer";
+
+function CustomPlayer() {
+  const [state, controls, tracks] = useOverPlayer({
+    tracks: myTracks,
+    shuffle: true,
+    volume: 0.5,
+  });
+
+  return (
+    <div>
+      <p>Now playing: {state.currentTrack?.title}</p>
+      <p>{formatTime(state.currentTime)} / {formatTime(state.duration)}</p>
+      <button onClick={controls.toggle}>
+        {state.playing ? "Pause" : "Play"}
+      </button>
+      <button onClick={controls.next}>Next</button>
+      <button onClick={controls.prev}>Prev</button>
+      <input
+        type="range"
+        min={0}
+        max={state.duration}
+        value={state.currentTime}
+        onChange={(e) => controls.seek(Number(e.target.value))}
+      />
+    </div>
+  );
+}
+```
+
+### Controls
+
+| Method | Description |
+|--------|-------------|
+| `play()` | Start playback |
+| `pause()` | Pause playback |
+| `toggle()` | Toggle play/pause |
+| `next()` | Next track |
+| `prev()` | Previous track |
+| `seek(time)` | Seek to time in seconds |
+| `setVolume(vol)` | Set volume (0–1) |
+| `toggleMute()` | Toggle mute |
+| `toggleShuffle()` | Toggle shuffle mode |
+| `toggleRepeat()` | Toggle repeat one |
+| `jumpTo(index)` | Jump to track by index |
+
+### State
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `playing` | `boolean` | Is audio playing |
+| `currentTrack` | `Track \| null` | Current track object |
+| `trackIndex` | `number` | Current track index |
+| `currentTime` | `number` | Current time in seconds |
+| `duration` | `number` | Track duration in seconds |
+| `volume` | `number` | Current volume (0–1) |
+| `muted` | `boolean` | Is muted |
+| `shuffleOn` | `boolean` | Is shuffle enabled |
+| `repeatOne` | `boolean` | Is repeat one enabled |
+
+---
+
 ## Examples
 
-### Dark Theme with Custom Colors
+### With Cover Art
+
+```tsx
+const tracks = [
+  {
+    src: "/audio/track-01.mp3",
+    title: "Opening Theme",
+    artist: "Artist",
+    cover: "/covers/track-01.jpg",
+  },
+];
+
+<OverPlayer tracks={tracks} />
+```
+
+### Event Callbacks
 
 ```tsx
 <OverPlayer
   tracks={tracks}
-  theme="dark"
-  accentColor="#ffd700"
-  accentColorAlt="#ff6b35"
-  brandLabel="MyRadio"
+  onTrackChange={(track, index) => console.log(`Now playing: ${track.title}`)}
+  onPlay={() => analytics.track("play")}
+  onPause={() => analytics.track("pause")}
 />
 ```
 
-### Light Theme
+### Custom Colors
 
 ```tsx
 <OverPlayer
@@ -148,40 +260,18 @@ interface Track {
   theme="light"
   accentColor="#6366f1"
   accentColorAlt="#ec4899"
-/>
-```
-
-### With Footer
-
-```tsx
-<OverPlayer
-  tracks={tracks}
-  footer={
-    <div style={{ background: "#111", padding: "4px 12px", textAlign: "center" }}>
-      <small>Powered by OverPlayer</small>
-    </div>
-  }
+  brandLabel="MyRadio"
 />
 ```
 
 ### Multiple Playlists
-
-Use different `storageKey` values so each player maintains its own state:
 
 ```tsx
 <OverPlayer tracks={podcastTracks} storageKey="podcast-player" brandLabel="Podcasts" />
 <OverPlayer tracks={musicTracks} storageKey="music-player" brandLabel="Music" />
 ```
 
-### No Autoplay
-
-```tsx
-<OverPlayer tracks={tracks} autoplay={false} />
-```
-
 ### Next.js / App Router
-
-Works out of the box — the component includes `"use client"` directive. Place it in your root layout:
 
 ```tsx
 // app/layout.tsx
@@ -193,7 +283,7 @@ export default function RootLayout({ children }) {
     <html>
       <body>
         {children}
-        <OverPlayer tracks={tracks} />
+        <OverPlayer tracks={tracks} theme="auto" />
       </body>
     </html>
   );
@@ -204,9 +294,12 @@ export default function RootLayout({ children }) {
 
 ## How It Works
 
-- **Global singleton audio** — a single `HTMLAudioElement` is created per `storageKey` and persists across React remounts, so navigation doesn't interrupt playback.
-- **Session storage** — track order, current track, position, and playing state are saved every 500ms and restored on page reload.
-- **Autoplay unlock** — if the browser blocks autoplay, the player registers one-time listeners on `click`, `touchstart`, `keydown`, `mousemove`, `scroll`, and `pointerdown` to resume playback on the first user interaction.
+- **Global singleton audio** — one `HTMLAudioElement` per `storageKey`, persists across React remounts
+- **Session storage** — track order, position, and playing state saved every 500ms
+- **Autoplay unlock** — registers one-time listeners on user interaction events to resume playback
+- **Progress bar** — uses `timeupdate` events for real-time progress, click-to-seek on the bar
+- **Playlist drawer** — animated slide-up panel with track list and playing indicator
+- **Keyboard shortcuts** — global `keydown` listener, ignored when focus is in inputs/textareas
 
 ---
 
@@ -216,10 +309,12 @@ export default function RootLayout({ children }) {
 git clone https://github.com/GameOwerMedia/OverPlayer.git
 cd OverPlayer
 npm install
-npm run dev      # watch mode
-npm run build    # production build
-npm run typecheck
+npm run dev        # watch mode
+npm run build      # production build
+npm run typecheck  # type checking
 ```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ---
 
